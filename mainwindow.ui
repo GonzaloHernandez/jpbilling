@@ -47,6 +47,7 @@
     </property>
     <addaction name="action_puc"/>
     <addaction name="action_homes"/>
+    <addaction name="action_providers"/>
    </widget>
    <widget class="QMenu" name="menu_activities">
     <property name="title">
@@ -56,8 +57,15 @@
     <addaction name="action_billing"/>
     <addaction name="action_collect"/>
    </widget>
+   <widget class="QMenu" name="menuReportes">
+    <property name="title">
+     <string>Reportes</string>
+    </property>
+    <addaction name="action_history_home"/>
+   </widget>
    <addaction name="menu_system"/>
    <addaction name="menu_activities"/>
+   <addaction name="menuReportes"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -90,6 +98,16 @@
   <action name="action_homes">
    <property name="text">
     <string>Casas</string>
+   </property>
+  </action>
+  <action name="action_providers">
+   <property name="text">
+    <string>Proveedores</string>
+   </property>
+  </action>
+  <action name="action_history_home">
+   <property name="text">
+    <string>Historial por casa</string>
    </property>
   </action>
  </widget>
@@ -176,6 +194,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_providers</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openProviders()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_history_home</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openHomeHistory()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -183,5 +233,7 @@
   <slot>openCollect()</slot>
   <slot>openPUC()</slot>
   <slot>openHomes()</slot>
+  <slot>openProviders()</slot>
+  <slot>openHomeHistory()</slot>
  </slots>
 </ui>

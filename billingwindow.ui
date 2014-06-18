@@ -106,6 +106,59 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tab_penalties">
+      <attribute name="title">
+       <string>Generar Multas</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <layout class="QFormLayout" name="formLayout_3">
+           <property name="fieldGrowthPolicy">
+            <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+           </property>
+           <item row="0" column="0">
+            <widget class="QLabel" name="label_penalty">
+             <property name="text">
+              <string>Valor de la multa</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLineEdit" name="lineedit_penalty"/>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="button_generate">
+           <property name="text">
+            <string>Generar</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QTableWidget" name="table_penalties">
+         <property name="columnCount">
+          <number>4</number>
+         </property>
+         <column/>
+         <column/>
+         <column/>
+         <column/>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="button_savepenalties">
+         <property name="text">
+          <string>Guardar registros</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="tab_particular">
       <attribute name="title">
        <string>Cargos particulares</string>
