@@ -10,6 +10,8 @@
 #include <ui_collectwindow.h>
 #include <ui_pucwindow.h>
 #include <ui_homeswindow.h>
+#include <ui_providerswindow.h>
+#include <ui_homehistorywindow.h>
 
 #define DEBIT 0
 #define CREDIT 1
@@ -35,6 +37,8 @@ private slots:
     void openCollect();
     void openPUC();
     void openHomes();
+    void openProviders();
+    void openHomeHistory();
 
     void loadProvidersType();
     void loadProviders();
@@ -44,6 +48,7 @@ private slots:
 
     void loadBillingType();
     void createGeneralBilling();
+    void loadPenalties();
 
     void saveGeneralBilling();
     void saveParticularBilling();
@@ -54,9 +59,15 @@ private slots:
 
     void loadHomes();
     void saveHomes();
-    void loadHistory();
+    void loadProvidersWindow();
+    void saveProvidersWindow();
+
+    void loadDebut();
     void saveCollect();
-    void loadSummary();
+    void resumeCollect(int,int);
+
+    void loadHomesHistoryWindow();
+    void loadHistory();
 
 private:
     Ui::MainWindow*         ui;
@@ -66,6 +77,8 @@ private:
     Ui::CollectWindow*      uicollect;
     Ui::PUCWindow*          uipuc;
     Ui::HomesWindow*        uihomes;
+    Ui::ProvidersWindow*    uiproviders;
+    Ui::HomeHistoryWindow*  uihomehistory;
 
     bool                dbconnected;
     QSqlDatabase        db;

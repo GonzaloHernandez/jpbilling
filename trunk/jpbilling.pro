@@ -24,4 +24,6 @@ FORMS    += mainwindow.ui \
     billinglistwindow.ui \
     collectwindow.ui \
     pucwindow.ui \
-    homeswindow.ui
+    homeswindow.ui \
+    providerswindow.ui \
+    homehistorywindow.ui
