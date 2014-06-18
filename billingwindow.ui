@@ -33,7 +33,7 @@
      </property>
      <widget class="QWidget" name="tab_general">
       <attribute name="title">
-       <string>General</string>
+       <string>Cargos generales</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -100,16 +100,96 @@
        <item>
         <widget class="QPushButton" name="button_savegeneralbilling">
          <property name="text">
-          <string>Generar Facturación</string>
+          <string>Generar Facturación General</string>
          </property>
         </widget>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tab_penalty">
+     <widget class="QWidget" name="tab_particular">
       <attribute name="title">
-       <string>Sanción por mora</string>
+       <string>Cargos particulares</string>
       </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <item>
+        <layout class="QFormLayout" name="formLayout_2">
+         <property name="fieldGrowthPolicy">
+          <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_p_date">
+           <property name="text">
+            <string>Fecha</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDateEdit" name="dateedit_p_date">
+           <property name="displayFormat">
+            <string>yyyy-MM-dd</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_p_type">
+           <property name="text">
+            <string>Tipo</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="combobox_p_type"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_p_value">
+           <property name="text">
+            <string>Valor</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="lineedit_p_value"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_p_detail">
+           <property name="text">
+            <string>Detalle</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="lineedit_p_detail"/>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_p_voucher">
+           <property name="text">
+            <string>Combrobante</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="lineedit_p_voucher"/>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_p_home">
+           <property name="text">
+            <string>Casa</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="combobox_p_home"/>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QPushButton" name="button_saveparticularbilling">
+         <property name="text">
+          <string>Guardar Registro</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

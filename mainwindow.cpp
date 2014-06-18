@@ -41,11 +41,6 @@ void MainWindow::disconnectDB()
   }
 }
 
-void MainWindow::openAccounts()
-{
-
-}
-
 void MainWindow::openPayments()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -58,6 +53,7 @@ void MainWindow::openPayments()
   QWidget* subwindow = new QWidget;
   uipayments = new Ui::PaymentsWindow;
   uipayments->setupUi(subwindow);
+  uipayments->dateedit_date->setDate(QDate::currentDate());
   subwindow->setWindowTitle("Pagos");
   subwindow->setMinimumWidth(400);
   ui->mdiArea->addSubWindow(subwindow);
@@ -84,8 +80,11 @@ void MainWindow::openBilling()
   subwindow->setWindowTitle("Facturación");
   subwindow->setMinimumWidth(400);
   ui->mdiArea->addSubWindow(subwindow);
+  uibilling->dateedit_date->setDate(QDate::currentDate());
+  uibilling->dateedit_p_date->setDate(QDate::currentDate());
   subwindow->show();
   connect(uibilling->button_savegeneralbilling,SIGNAL(clicked()),this,SLOT(saveGeneralBilling()));
+  connect(uibilling->button_saveparticularbilling,SIGNAL(clicked()),this,SLOT(saveParticularBilling()));
   loadBillingType();
 }
 
@@ -128,12 +127,29 @@ void MainWindow::openCollect()
   uicollect = new Ui::CollectWindow;
   uicollect->setupUi(subwindow);
   subwindow->setWindowTitle("Recaudo");
-  subwindow->setMinimumWidth(400);
+  subwindow->setMinimumWidth(600);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
   uicollect->table_history->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
+  uicollect->table_history->setColumnWidth(0, 90);
+  uicollect->table_history->setColumnWidth(1,200);
+  uicollect->table_history->setColumnWidth(2, 80);
+  uicollect->table_history->setColumnWidth(3, 80);
+  labels.clear();
+  uicollect->table_detail->setHorizontalHeaderLabels(labels<<"Concepto"<<"Detalle"<<"Deuda"<<"Valor");
+  uicollect->table_detail->setColumnWidth(0,190);
+  uicollect->table_detail->setColumnWidth(1,170);
+  uicollect->table_detail->setColumnWidth(2, 90);
+  uicollect->table_detail->setColumnWidth(3, 90);
+  labels.clear();
+  uicollect->table_summary->setHorizontalHeaderLabels(labels<<"Concepto"<<"Total");
+  uicollect->table_summary->setColumnWidth(0,200);
+  uicollect->table_summary->setColumnWidth(1,100);
   subwindow->show();
   connect(uicollect->combobox_home,SIGNAL(currentTextChanged(QString)),this,SLOT(loadHistory()));
+  connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
+  connect(uicollect->table_detail,SIGNAL(cellChanged(int,int)),this,SLOT(resumeCollect(int,int)));
+  uicollect->dateedit_date->setDate(QDate::currentDate());
   loadOwners();
 }
 
@@ -197,9 +213,8 @@ void MainWindow::loadProvidersType()
 void MainWindow::loadProviders()
 {
   uipayments->combobox_provider->clear();
-  int type = uipayments->combobox_type->currentData().toInt();
   QSqlQuery query;
-  query.exec(QString("SELECT number,name FROM accounts WHERE handler = %1").arg(type));
+  query.exec("SELECT id,field1 FROM descriptors WHERE id NOT LIKE 'Casa%'");
   while (query.next())
   {
     uipayments->combobox_provider->addItem(query.value(1).toString(),query.value(0).toInt());
@@ -220,36 +235,33 @@ void MainWindow::savePayment()
 {
   QSqlQuery query;
   int       number = 1;
-  int       account;
+  int       account0,account1;
   QString   date;
-  bool      type;
   int       value;
   QString   detail;
+  QString   descriptor;
 
-  query.exec("SELECT max(number) FROM accountsentries");
+  query.exec("SELECT max(number) FROM entries");
   if (query.next()) {
     number = query.value(0).toInt()+1;
   }
-  date    = uipayments->dateedit_date->text();
-  value   = uipayments->lineedit_value->text().toInt();
 
-  account = uipayments->combobox_provider->currentData().toInt();
-  type    = DEBIT;
-  detail  = uipayments->lineedit_detail->text();
+  account0    = uipayments->combobox_type->currentData().toInt();
+  account1    = uipayments->combobox_from->currentData().toInt();
+  detail      = uipayments->lineedit_detail->text();
+  date        = uipayments->dateedit_date->text();
+  value       = uipayments->lineedit_value->text().toInt();
+  descriptor  = uipayments->combobox_provider->currentData().toString();
 
-  QString querytext0 = QString("INSERT INTO accountsentries VALUES(%1,%2,'%3',%4,%5,'%6')").arg(number).arg(account).arg(date).arg(type).arg(value).arg(detail);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   cout << querytext0.toStdString()<< endl;
 //  query.exec(querytext0);
 
-  account = uipayments->combobox_from->currentData().toInt();
-  type    = CREDIT;
-  detail  = uipayments->combobox_type->currentText()+": "+uipayments->lineedit_detail->text();
-
-  QString querytext1 = QString("INSERT INTO accountsentries VALUES(%1,%2,'%3',%4,%5,'%6')").arg(number).arg(account).arg(date).arg(type).arg(value).arg(detail);
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
   cout << querytext1.toStdString()<< endl;
 //  query.exec(querytext1);
 
-  QMessageBox::information(this,"Titulo",QString("Asiento registrado [Número: %1]").arg(number));
+  QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
 }
 
 void MainWindow::saveProvider()
@@ -261,9 +273,10 @@ void MainWindow::saveProvider()
 
   QString querytext = QString("INSERT INTO descriptors VALUES('%1','%2','%3','%4')").arg(id).arg(name).arg(phone).arg(address);
 
-//  query.exec(querytext);
+  QSqlQuery query;
+  query.exec(querytext);
+//  cout << querytext.toStdString() << endl;
 
-  cout << querytext.toStdString() << endl;
   loadProviders();
   QMessageBox::information(this,"Registro guardado",QString("Proveedor de servicio guardado "));
 }
@@ -276,10 +289,19 @@ void MainWindow::loadBillingType()
   {
     uibilling->combobox_type->addItem(query.value(1).toString(),query.value(0).toInt());
   }
+  query.exec(QString("SELECT number,name FROM accounts WHERE handler=1320 AND number NOT IN (132030,132040,132050)"));
+  while (query.next())
+  {
+    uibilling->combobox_p_type->addItem(query.value(1).toString(),query.value(0).toInt());
+  }
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE id LIKE 'Casa%'"));
+  while(query.next()) {
+    uibilling->combobox_p_home->addItem(query.value(0).toString(),query.value(0));
+  }
 
 }
 
-void MainWindow::saveGeneralBilling()
+void MainWindow::createGeneralBilling()
 {
   QSqlQuery query;
   int       number = 1;
@@ -317,7 +339,7 @@ void MainWindow::saveGeneralBilling()
   list->show();
 }
 
-void MainWindow::saveBillingList()
+void MainWindow::saveGeneralBilling()
 {
   int     number    = uibillinglist->label_number->text().toInt();
   QString detail    = uibillinglist->label_detail->text();
@@ -349,12 +371,45 @@ void MainWindow::saveBillingList()
   QMessageBox::information(this,"Registros guardados","49 asientos contables procesados");
 }
 
+void MainWindow::saveParticularBilling()
+{
+  QSqlQuery query;
+  int       number = 1;
+  int       account0,account1;
+  QString   date;
+  int       value;
+  QString   detail;
+  QString   descriptor;
+
+  query.exec("SELECT max(number) FROM entries");
+  if (query.next()) {
+    number = query.value(0).toInt()+1;
+  }
+
+  account0    = uibilling->combobox_p_type->currentData().toInt();
+  account1    = 425035*100 + account0%100;
+  detail      = uibilling->lineedit_p_detail->text();
+  date        = uibilling->dateedit_p_date->text();
+  value       = uibilling->lineedit_p_value->text().toInt();
+  descriptor  = uibilling->combobox_p_home->currentData().toString();
+
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  cout << querytext0.toStdString()<< endl;
+//  query.exec(querytext0);
+
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+  cout << querytext1.toStdString()<< endl;
+//  query.exec(querytext1);
+
+  QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
+}
+
 void MainWindow::loadOwners()
 {
   QSqlQuery query;
   query.exec(QString("SELECT id,field1 FROM descriptors WHERE id LIKE 'Casa%'"));
   while(query.next()) {
-    uicollect->combobox_home->addItem(query.value(0).toString()+": "+query.value(1).toString(),query.value(0));
+    uicollect->combobox_home->addItem(query.value(0).toString(),query.value(0));
   }
 }
 
@@ -412,12 +467,92 @@ void MainWindow::saveHomes()
 
 void MainWindow::loadHistory()
 {
-  QString id = uicollect->combobox_home->currentData().toString();
-  uicollect->label_owner->setText(id);
-  QSqlQuery query;
-  query.exec(QString("SELECT name,date,type,value,detail FROM entries,accounts WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account").arg(id));
-  while (query.next()) {
-
+  for (int i=0; i<uicollect->table_history->rowCount(); i++) {
+    uicollect->table_history->removeRow(0);
   }
+  QString id = uicollect->combobox_home->currentData().toString();
+
+  QSqlQuery query;
+  QString   querytext = QString("SELECT entries.number,account,date,name,detail,value FROM entries,accounts WHERE account LIKE '1320%' AND descriptorid='%1' AND joinentry IS NULL AND type=0 AND entries.account=accounts.number").arg(id);
+  query.exec(querytext);
+  int i=0;
+  while (query.next()) {
+    uicollect->table_detail->insertRow(uicollect->table_detail->rowCount());
+    uicollect->table_detail->setItem(i,0,new QTableWidgetItem(query.value(3).toString()));
+    uicollect->table_detail->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
+    uicollect->table_detail->setItem(i,2,new QTableWidgetItem(query.value(5).toString()));
+    i++;
+  }
+//  query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
+//  query.next();
+
+//  uicollect->label_owner->setText(id+": "+query.value(0).toString());
+//  query.exec(QString("SELECT date,name,type,value,detail FROM entries,accounts WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account").arg(id));
+//  int i=0;
+//  int balance = 0;
+//  while (query.next()) {
+//    uicollect->table_history->insertRow(uicollect->table_history->rowCount());
+//    QString date    = query.value(0).toDate().toString("yyyy-MM-dd");
+//    QString account = query.value(1).toString();
+//    int     type    = query.value(2).toInt();
+//    int     value   = query.value(3).toInt();
+//    type==DEBIT?balance+=value:balance-=value;
+
+//    uicollect->table_history->setItem(i,0,new QTableWidgetItem(date));
+//    uicollect->table_history->setItem(i,1,new QTableWidgetItem(account));
+//    uicollect->table_history->setItem(i,2+type,new QTableWidgetItem(QString("%1").arg(value)));
+//    uicollect->table_history->setItem(i,4,new QTableWidgetItem(QString("%1").arg(balance)));
+//    uicollect->table_history->item(i,2+type)->setTextAlignment(Qt::AlignRight);
+//    uicollect->table_history->item(i,4)->setTextAlignment(Qt::AlignRight);
+//    i++;
+//  }
+
+
+
+}
+
+void MainWindow::saveCollect()
+{
+  QSqlQuery query;
+  int       number = 1;
+  int       account0,account1;
+  QString   date;
+  int       value;
+  QString   detail;
+  QString   descriptor;
+  QString   voucher;
+
+  query.exec("SELECT max(number) FROM entries");
+  if (query.next()) {
+    number = query.value(0).toInt()+1;
+  }
+
+  account0    = 110505; // General cashing
+  date        = uicollect->dateedit_date->text();
+  voucher     = uicollect->lineedit_voucher->text();
+  value       = uicollect->label_total->text().toInt();
+  detail      = QString("Recaudo [Comprobante: %1]").arg(voucher);
+  descriptor  = uicollect->combobox_home->currentData().toString();
+
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  cout << querytext0.toStdString()<< endl;
+//  query.exec(querytext0);
+
+  for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
+    account1    = ((QComboBox*)uicollect->table_detail->cellWidget(i,0))->currentData().toInt();
+    detail      = uicollect->table_detail->item(i,1)->text() + QString(" [Comprobante: %1]").arg(voucher);
+    value       = uicollect->table_detail->item(i,2)->text().toInt();
+
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+    cout << querytext1.toStdString()<< endl;
+  //  query.exec(querytext1);
+  }
+
+  QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
+}
+
+void MainWindow::loadSummary()
+{
+
 }
 
