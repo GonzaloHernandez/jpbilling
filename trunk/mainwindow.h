@@ -29,7 +29,6 @@ public:
 private slots:
     void connectDB();
     void disconnectDB();
-    void openAccounts();
     void openPayments();
     void openBilling();
     QWidget* openBillingList();
@@ -44,9 +43,10 @@ private slots:
     void saveProvider();
 
     void loadBillingType();
-    void saveGeneralBilling();
+    void createGeneralBilling();
 
-    void saveBillingList();
+    void saveGeneralBilling();
+    void saveParticularBilling();
 
     void loadOwners();
 
@@ -55,6 +55,8 @@ private slots:
     void loadHomes();
     void saveHomes();
     void loadHistory();
+    void saveCollect();
+    void loadSummary();
 
 private:
     Ui::MainWindow*         ui;
