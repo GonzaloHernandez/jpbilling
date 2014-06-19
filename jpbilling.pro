@@ -26,4 +26,8 @@ FORMS    += mainwindow.ui \
     pucwindow.ui \
     homeswindow.ui \
     providerswindow.ui \
-    homehistorywindow.ui
+    homehistorywindow.ui \
+    accountdetailwindow.ui
+
+RESOURCES += \
+    jpbilling.qrc

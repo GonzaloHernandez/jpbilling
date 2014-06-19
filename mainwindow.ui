@@ -48,6 +48,8 @@
     <addaction name="action_puc"/>
     <addaction name="action_homes"/>
     <addaction name="action_providers"/>
+    <addaction name="separator"/>
+    <addaction name="action_exit"/>
    </widget>
    <widget class="QMenu" name="menu_activities">
     <property name="title">
@@ -74,45 +76,95 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="action_puc"/>
+   <addaction name="action_homes"/>
+   <addaction name="action_providers"/>
+   <addaction name="separator"/>
+   <addaction name="action_payments"/>
+   <addaction name="action_billing"/>
+   <addaction name="action_collect"/>
+   <addaction name="separator"/>
+   <addaction name="action_history_home"/>
+   <addaction name="separator"/>
+   <addaction name="action_exit"/>
   </widget>
   <action name="action_puc">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/book.png</normaloff>:/images/book.png</iconset>
+   </property>
    <property name="text">
     <string>PUC</string>
    </property>
   </action>
   <action name="action_payments">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/dollar.png</normaloff>:/images/dollar.png</iconset>
+   </property>
    <property name="text">
     <string>Pagos</string>
    </property>
   </action>
   <action name="action_billing">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/desktop.png</normaloff>:/images/desktop.png</iconset>
+   </property>
    <property name="text">
     <string>Facturación</string>
    </property>
   </action>
   <action name="action_collect">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/cashier.png</normaloff>:/images/cashier.png</iconset>
+   </property>
    <property name="text">
     <string>Recaudo</string>
    </property>
   </action>
   <action name="action_homes">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/home.png</normaloff>:/images/home.png</iconset>
+   </property>
    <property name="text">
     <string>Casas</string>
    </property>
   </action>
   <action name="action_providers">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/businessmen.png</normaloff>:/images/businessmen.png</iconset>
+   </property>
    <property name="text">
     <string>Proveedores</string>
    </property>
   </action>
   <action name="action_history_home">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/form.png</normaloff>:/images/form.png</iconset>
+   </property>
    <property name="text">
     <string>Historial por casa</string>
    </property>
   </action>
+  <action name="action_exit">
+   <property name="icon">
+    <iconset resource="jpbilling.qrc">
+     <normaloff>:/images/exit.png</normaloff>:/images/exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>Salir</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="jpbilling.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>action_payments</sender>
@@ -215,6 +267,22 @@
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
    <slot>openHomeHistory()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_exit</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>

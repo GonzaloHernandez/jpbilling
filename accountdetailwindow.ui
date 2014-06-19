@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PUCWindow</class>
- <widget class="QWidget" name="PUCWindow">
+ <class>AccountDetail</class>
+ <widget class="QWidget" name="AccountDetail">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -27,19 +27,21 @@
     <number>3</number>
    </property>
    <item>
-    <widget class="QTreeWidget" name="tree_puc">
-     <column>
-      <property name="text">
-       <string notr="true">1</string>
-      </property>
-     </column>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="button_detail">
-     <property name="text">
-      <string>Ver movimientos de la cuenta</string>
+    <widget class="QTableWidget" name="table_detail">
+     <property name="columnCount">
+      <number>5</number>
      </property>
+     <attribute name="horizontalHeaderVisible">
+      <bool>true</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
+     <column/>
     </widget>
    </item>
   </layout>

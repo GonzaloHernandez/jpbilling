@@ -78,16 +78,23 @@ void MainWindow::openBilling()
   uibilling = new Ui::BillingWindow;
   uibilling->setupUi(subwindow);
   subwindow->setWindowTitle("Facturación");
-  subwindow->setMinimumWidth(400);
+  subwindow->setMinimumWidth(460);
   ui->mdiArea->addSubWindow(subwindow);
   uibilling->dateedit_date->setDate(QDate::currentDate());
   uibilling->dateedit_p_date->setDate(QDate::currentDate());
   QStringList labels;
-  labels<<"Casa"<<"Cuota"<<"Valor"<<"Multa";
+  labels<<"Casa"<<"Cuota"<<"Deuda"<<"Multa";
   uibilling->table_penalties->setHorizontalHeaderLabels(labels);
+  uibilling->table_penalties->setColumnWidth(0,80);
+  uibilling->table_penalties->setColumnWidth(1,150);
+  uibilling->table_penalties->setColumnWidth(2,80);
+  uibilling->table_penalties->setColumnWidth(3,80);
+  uibilling->dateedit_at->setDate(QDate::currentDate());
   subwindow->show();
   connect(uibilling->button_savegeneralbilling,SIGNAL(clicked()),this,SLOT(saveGeneralBilling()));
   connect(uibilling->button_saveparticularbilling,SIGNAL(clicked()),this,SLOT(saveParticularBilling()));
+  connect(uibilling->button_generate,SIGNAL(clicked()),this,SLOT(loadPenalties()));
+  connect(uibilling->button_savepenalties,SIGNAL(clicked()),this,SLOT(savePenalties()));
   loadBillingType();
 }
 
@@ -176,6 +183,7 @@ void MainWindow::openPUC()
   subwindow->show();
   QStringList labels("Cuentas");
   uipuc->tree_puc->setHeaderLabels(labels);
+  connect(uipuc->button_detail,SIGNAL(clicked()),this,SLOT(openAccountDetail()));
   loadAccounts(uipuc->tree_puc);
 }
 
@@ -404,6 +412,62 @@ void MainWindow::loadPenalties()
 {
   uibilling->table_penalties->setRowCount(0);
 
+  QSqlQuery query;
+  QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value,descriptorid,"
+                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
+                                "FROM entries,accounts "
+                                "WHERE account = 132030 AND joinentry IS NULL AND type=0 AND date >= '%1' "
+                                "AND entries.account=accounts.number "
+                                "ORDER BY descriptorid,date").arg(uibilling->dateedit_since->text());
+  query.exec(querytext);
+  int i=0;
+  while (query.next()) {
+    uibilling->table_penalties->insertRow(uibilling->table_penalties->rowCount());
+    uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(6).toString()));
+    uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
+    uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(query.value(5).toString()));
+    uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(uibilling->lineedit_penalty->text()));
+    for (int c=0; c<3; c++) {
+      uibilling->table_penalties->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    }
+    i++;
+  }
+}
+
+void MainWindow::savePenalties()
+{
+  int     number    = 1;
+  QString detail;
+  int     account0  = 132035;
+  int     account1  = 42503535;
+  QString date      = uibilling->dateedit_at->text();
+  QString home;
+
+  int     value;
+  QSqlQuery query;
+  query.exec("SELECT max(number) FROM entries");
+  if (query.next()) {
+    number = query.value(0).toInt()+1;
+  }
+
+  for (int i=0; i<uibilling->table_penalties->rowCount(); i++) {
+    home      = uibilling->table_penalties->item(i,0)->text();
+    value     = uibilling->table_penalties->item(i,3)->text().toInt();
+    detail    = QString("No pago de: ")+uibilling->table_penalties->item(i,1)->text();
+
+    QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
+    cout << querytext0.toStdString()<< endl;
+//    query.exec(querytext0);
+
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
+    cout << querytext1.toStdString()<< endl;
+//    query.exec(querytext1);
+
+    number++;
+    cout << endl;
+  }
+  QMessageBox::information(this,"Registros guardados",QString("%1 asientos contables procesados").arg(uibilling->table_penalties->rowCount()));
+  uibilling->table_penalties->setRowCount(0);
 }
 
 void MainWindow::saveGeneralBilling()
@@ -487,7 +551,7 @@ void MainWindow::loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item, int ha
     query.exec("SELECT number, name FROM accounts WHERE handler IS NULL");
     while (query.next()) {
       QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
-      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels<<query.value(0).toString());
       widget->addTopLevelItem(it);
       loadAccounts(widget,it,query.value(0).toInt());
     }
@@ -496,7 +560,7 @@ void MainWindow::loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item, int ha
     query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
     while (query.next()) {
       QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
-      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels<<query.value(0).toString());
       item->addChild(it);
       loadAccounts(widget,it,query.value(0).toInt());
     }
@@ -571,8 +635,8 @@ void MainWindow::loadDebut()
   QString id = uicollect->combobox_home->currentData().toString();
 
   QSqlQuery query;
-  QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value "
-//                                ",(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n)"
+  QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
+                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n)"
                                 "FROM entries,accounts "
                                 "WHERE account LIKE '1320%' AND descriptorid='%1' AND joinentry IS NULL AND type=0 "
                                 "AND entries.account=accounts.number").arg(id);
@@ -699,6 +763,73 @@ void MainWindow::loadHistory()
 
     for (int c=0; c<5; c++) {
       uihomehistory->table_history->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    }
+    i++;
+  }
+}
+
+void MainWindow::openAccountDetail()
+{
+  if (!uipuc->tree_puc->currentItem()) return;
+  int account =  uipuc->tree_puc->currentItem()->text(1).toInt();
+  QString name = uipuc->tree_puc->currentItem()->text(0);
+
+  foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+    if (subwindow->windowTitle() == QString("Detalle de la cuenta %1").arg(name)) {
+      subwindow->activateWindow();
+      return;
+    }
+  }
+
+  QWidget* subwindow = new QWidget;
+  uiaccountdetail = new Ui::AccountDetail;
+  uiaccountdetail->setupUi(subwindow);
+  subwindow->setWindowTitle(QString("Detalle de la cuenta %1").arg(name));
+  subwindow->setMinimumWidth(620);
+  QStringList labels;
+  uiaccountdetail->table_detail->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
+  uiaccountdetail->table_detail->setColumnWidth(0, 90);
+  uiaccountdetail->table_detail->setColumnWidth(1,250);
+  uiaccountdetail->table_detail->setColumnWidth(2, 80);
+  uiaccountdetail->table_detail->setColumnWidth(3, 80);
+  uiaccountdetail->table_detail->setColumnWidth(4, 80);
+  ui->mdiArea->addSubWindow(subwindow);
+  subwindow->show();
+  loadAccountDetail(account);
+}
+
+void MainWindow::loadAccountDetail(int account)
+{
+  QSqlQuery query;
+  query.exec(QString("SELECT date,name,type,value,detail,entries.number,joinentry "
+                     "FROM entries,accounts "
+                     "WHERE account = %1 AND accounts.number=entries.account "
+                     "ORDER BY date").arg(account));
+
+  uiaccountdetail->table_detail->setRowCount(0);
+
+  int i=0;
+  int balance = 0;
+  while (query.next()) {
+    uiaccountdetail->table_detail->insertRow(uiaccountdetail->table_detail->rowCount());
+    QString date    = query.value(0).toDate().toString("yyyy-MM-dd");
+    QString account = query.value(1).toString();
+    int     type    = query.value(2).toInt();
+    int     value   = query.value(3).toInt();
+    QString detail  = query.value(4).toString();
+    type==DEBIT?balance+=value:balance-=value;
+
+    uiaccountdetail->table_detail->setItem(i,0,new QTableWidgetItem(date));
+    uiaccountdetail->table_detail->setItem(i,1,new QTableWidgetItem(account+": "+detail));
+    uiaccountdetail->table_detail->setItem(i,2+type,new QTableWidgetItem(QString("%1").arg(value)));
+    uiaccountdetail->table_detail->setItem(i,3-type,new QTableWidgetItem(""));
+    uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%1").arg(balance)));
+    uiaccountdetail->table_detail->item(i,2)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    uiaccountdetail->table_detail->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    uiaccountdetail->table_detail->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+
+    for (int c=0; c<5; c++) {
+      uiaccountdetail->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     }
     i++;
   }

@@ -12,6 +12,7 @@
 #include <ui_homeswindow.h>
 #include <ui_providerswindow.h>
 #include <ui_homehistorywindow.h>
+#include <ui_accountdetailwindow.h>
 
 #define DEBIT 0
 #define CREDIT 1
@@ -49,6 +50,7 @@ private slots:
     void loadBillingType();
     void createGeneralBilling();
     void loadPenalties();
+    void savePenalties();
 
     void saveGeneralBilling();
     void saveParticularBilling();
@@ -69,6 +71,9 @@ private slots:
     void loadHomesHistoryWindow();
     void loadHistory();
 
+    void openAccountDetail();
+    void loadAccountDetail(int);
+
 private:
     Ui::MainWindow*         ui;
     Ui::PaymentsWindow*     uipayments;
@@ -79,6 +84,7 @@ private:
     Ui::HomesWindow*        uihomes;
     Ui::ProvidersWindow*    uiproviders;
     Ui::HomeHistoryWindow*  uihomehistory;
+    Ui::AccountDetail*      uiaccountdetail;
 
     bool                dbconnected;
     QSqlDatabase        db;
