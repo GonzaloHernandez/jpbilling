@@ -323,12 +323,10 @@ void MainWindow::savePayment()
   descriptor  = uipayments->combobox_provider->currentData().toString();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
-  cout << querytext0.toStdString()<< endl;
-//  query.exec(querytext0);
+  query.exec(querytext0);
 
   QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
-  cout << querytext1.toStdString()<< endl;
-//  query.exec(querytext1);
+  query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
 }
@@ -344,7 +342,6 @@ void MainWindow::saveProvider()
 
   QSqlQuery query;
   query.exec(querytext);
-//  cout << querytext.toStdString() << endl;
 
   loadProviders();
   QMessageBox::information(this,"Registro guardado",QString("Proveedor de servicio guardado "));
@@ -456,15 +453,12 @@ void MainWindow::savePenalties()
     detail    = QString("No pago de: ")+uibilling->table_penalties->item(i,1)->text();
 
     QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
-    cout << querytext0.toStdString()<< endl;
-//    query.exec(querytext0);
+    query.exec(querytext0);
 
     QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
-    cout << querytext1.toStdString()<< endl;
-//    query.exec(querytext1);
+    query.exec(querytext1);
 
     number++;
-    cout << endl;
   }
   QMessageBox::information(this,"Registros guardados",QString("%1 asientos contables procesados").arg(uibilling->table_penalties->rowCount()));
   uibilling->table_penalties->setRowCount(0);
@@ -488,15 +482,12 @@ void MainWindow::saveGeneralBilling()
     detail    = uibillinglist->label_detail->text() + QString(" [Comprobante %1]").arg(voucher);
 
     QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(name);
-    cout << querytext0.toStdString()<< endl;
-//    query.exec(querytext0);
+    query.exec(querytext0);
 
     QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(name);
-    cout << querytext1.toStdString()<< endl;
-//    query.exec(querytext1);
+    query.exec(querytext1);
 
     number++;
-    cout << endl;
   }
   uibillinglist->button_save->setEnabled(false);
   QMessageBox::information(this,"Registros guardados","49 asientos contables procesados");
@@ -525,12 +516,10 @@ void MainWindow::saveParticularBilling()
   descriptor  = uibilling->combobox_p_home->currentData().toString();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
-  cout << querytext0.toStdString()<< endl;
-//  query.exec(querytext0);
+  query.exec(querytext0);
 
   QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
-  cout << querytext1.toStdString()<< endl;
-//  query.exec(querytext1);
+  query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
 }
@@ -689,8 +678,7 @@ void MainWindow::saveCollect()
   descriptor  = uicollect->combobox_home->currentData().toString();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
-  cout << querytext0.toStdString()<< endl;
-//  query.exec(querytext0);
+  query.exec(querytext0);
 
   for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
     value       = uicollect->table_detail->item(i,3)->text().toInt();
@@ -700,12 +688,10 @@ void MainWindow::saveCollect()
     joinentry   = uicollect->table_detail->item(i,4)->text().toInt();
 
     QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry);
-    cout << querytext1.toStdString()<< endl;
-  //  query.exec(querytext1);
+    query.exec(querytext1);
 
     QString querytext2 = QString("UPDATE entries SET joinentry=%1 WHERE number=%2 AND account=%3").arg(number).arg(joinentry).arg(account1);
-    cout << querytext2.toStdString()<< endl;
-    //  query.exec(querytext2);
+    query.exec(querytext2);
   }
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
