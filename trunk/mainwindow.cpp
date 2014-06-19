@@ -474,6 +474,7 @@ void MainWindow::saveGeneralBilling()
   QString name;
   int     value;
   int     voucher;
+  QSqlQuery query;
 
   for (int i=0; i<49; i++) {
     name      = uibillinglist->table_billing->item(i,0)->text();
