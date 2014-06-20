@@ -91,7 +91,7 @@ void MainWindow::openBilling()
   uibilling->table_penalties->setColumnWidth(3,80);
   uibilling->dateedit_at->setDate(QDate::currentDate());
   subwindow->show();
-  connect(uibilling->button_savegeneralbilling,SIGNAL(clicked()),this,SLOT(saveGeneralBilling()));
+  connect(uibilling->button_savegeneralbilling,SIGNAL(clicked()),this,SLOT(createGeneralBilling()));
   connect(uibilling->button_saveparticularbilling,SIGNAL(clicked()),this,SLOT(saveParticularBilling()));
   connect(uibilling->button_generate,SIGNAL(clicked()),this,SLOT(loadPenalties()));
   connect(uibilling->button_savepenalties,SIGNAL(clicked()),this,SLOT(savePenalties()));
@@ -275,7 +275,7 @@ void MainWindow::loadProvidersType()
   query.exec(QString("SELECT number,name FROM accounts WHERE handler IN (SELECT number FROM accounts WHERE handler = 51)"));
   while (query.next())
   {
-    uipayments->combobox_type->addItem(query.value(1).toString(),query.value(0).toInt());
+    uipayments->combobox_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
   }
 }
 
@@ -286,7 +286,7 @@ void MainWindow::loadProviders()
   query.exec("SELECT id,field1 FROM descriptors WHERE id NOT LIKE 'Casa%'");
   while (query.next())
   {
-    uipayments->combobox_provider->addItem(query.value(1).toString(),query.value(0).toInt());
+    uipayments->combobox_provider->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
   }
 }
 
@@ -296,7 +296,7 @@ void MainWindow::loadResources()
   query.exec(QString("SELECT number,name FROM accounts WHERE handler IN (SELECT number FROM accounts WHERE handler = 11)"));
   while (query.next())
   {
-    uipayments->combobox_from->addItem(query.value(1).toString(),query.value(0).toInt());
+    uipayments->combobox_from->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
   }
 }
 
@@ -315,12 +315,15 @@ void MainWindow::savePayment()
     number = query.value(0).toInt()+1;
   }
 
-  account0    = uipayments->combobox_type->currentData().toInt();
-  account1    = uipayments->combobox_from->currentData().toInt();
+//  account0    = uipayments->combobox_type->currentData().toInt();
+  account0    = uipayments->combobox_type->currentText().split(" ").at(0).toInt();
+//  account1    = uipayments->combobox_from->currentData().toInt();
+  account1    = uipayments->combobox_from->currentText().split(" ").at(0).toInt();
   detail      = uipayments->lineedit_detail->text();
   date        = uipayments->dateedit_date->text();
   value       = uipayments->lineedit_value->text().toInt();
-  descriptor  = uipayments->combobox_provider->currentData().toString();
+//  descriptor  = uipayments->combobox_provider->currentData().toString();
+  descriptor  = uipayments->combobox_provider->currentText().split(" ").at(0);
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
@@ -353,18 +356,19 @@ void MainWindow::loadBillingType()
   query.exec(QString("SELECT number,name FROM accounts WHERE number IN (132030,132040,132050)"));
   while (query.next())
   {
-    uibilling->combobox_type->addItem(query.value(1).toString(),query.value(0).toInt());
+    uibilling->combobox_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
+//    uibilling->combobox_type->addItem(query.value(1).toString()+query.value(0).toInt());
   }
   query.exec(QString("SELECT number,name FROM accounts WHERE handler=1320 AND number NOT IN (132030,132040,132050)"));
   while (query.next())
   {
-    uibilling->combobox_p_type->addItem(query.value(1).toString(),query.value(0).toInt());
+    uibilling->combobox_p_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
+//    uibilling->combobox_p_type->addItem(query.value(1).toString(),query.value(0).toInt());
   }
   query.exec(QString("SELECT id,field1 FROM descriptors WHERE id LIKE 'Casa%'"));
   while(query.next()) {
     uibilling->combobox_p_home->addItem(query.value(0).toString(),query.value(0));
   }
-
 }
 
 void MainWindow::createGeneralBilling()
@@ -380,12 +384,13 @@ void MainWindow::createGeneralBilling()
     number = query.value(0).toInt()+1;
   }
 
+
   value   = uibilling->lineedit_value->text().toInt();
   voucher = uibilling->lineedit_voucher->text().toInt();
-  handler = uibilling->combobox_type->currentData().toString();
+//  handler = uibilling->combobox_type->currentData().toString();
+  handler = uibilling->combobox_type->currentText().split(" ").at(0);
 
   query.exec(QString("SELECT id FROM descriptors WHERE id like 'Casa%'"));
-
   QWidget* list = openBillingList();
   uibillinglist->label_number->setText(QString("%1").arg(number));
   uibillinglist->label_detail->setText(uibilling->lineedit_detail->text());
@@ -509,12 +514,13 @@ void MainWindow::saveParticularBilling()
     number = query.value(0).toInt()+1;
   }
 
-  account0    = uibilling->combobox_p_type->currentData().toInt();
+//  account0    = uibilling->combobox_p_type->currentData().toInt();
+  account0    = uibilling->combobox_p_type->currentText().split(" ").at(0).toInt();
   account1    = 425035*100 + account0%100;
   detail      = uibilling->lineedit_p_detail->text();
   date        = uibilling->dateedit_p_date->text();
   value       = uibilling->lineedit_p_value->text().toInt();
-  descriptor  = uibilling->combobox_p_home->currentData().toString();
+  descriptor  = uibilling->combobox_p_home->currentText();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
@@ -622,7 +628,7 @@ void MainWindow::loadDebut()
 {
   uicollect->table_detail->setRowCount(0);
 
-  QString id = uicollect->combobox_home->currentData().toString();
+  QString id = uicollect->combobox_home->currentText();
 
   QSqlQuery query;
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
@@ -676,7 +682,7 @@ void MainWindow::saveCollect()
   voucher     = uicollect->lineedit_voucher->text();
   value       = uicollect->label_total->text().toInt();
   detail      = QString("Recaudo [Comprobante: %1]").arg(voucher);
-  descriptor  = uicollect->combobox_home->currentData().toString();
+  descriptor  = uicollect->combobox_home->currentText();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
@@ -788,7 +794,7 @@ void MainWindow::openAccountDetail()
 void MainWindow::loadAccountDetail(int account)
 {
   QSqlQuery query;
-  query.exec(QString("SELECT date,name,type,value,detail,entries.number,joinentry "
+  query.exec(QString("SELECT date,name,type,value,detail,entries.number,joinentry,descriptorid "
                      "FROM entries,accounts "
                      "WHERE account = %1 AND accounts.number=entries.account "
                      "ORDER BY date").arg(account));
@@ -799,15 +805,16 @@ void MainWindow::loadAccountDetail(int account)
   int balance = 0;
   while (query.next()) {
     uiaccountdetail->table_detail->insertRow(uiaccountdetail->table_detail->rowCount());
-    QString date    = query.value(0).toDate().toString("yyyy-MM-dd");
-    QString account = query.value(1).toString();
-    int     type    = query.value(2).toInt();
-    int     value   = query.value(3).toInt();
-    QString detail  = query.value(4).toString();
+    QString date        = query.value(0).toDate().toString("yyyy-MM-dd");
+    QString account     = query.value(1).toString();
+    int     type        = query.value(2).toInt();
+    int     value       = query.value(3).toInt();
+    QString detail      = query.value(4).toString();
+    QString descriptor  = query.value(7).toString();
     type==DEBIT?balance+=value:balance-=value;
 
     uiaccountdetail->table_detail->setItem(i,0,new QTableWidgetItem(date));
-    uiaccountdetail->table_detail->setItem(i,1,new QTableWidgetItem(account+": "+detail));
+    uiaccountdetail->table_detail->setItem(i,1,new QTableWidgetItem(descriptor+": "+detail));
     uiaccountdetail->table_detail->setItem(i,2+type,new QTableWidgetItem(QString("%1").arg(value)));
     uiaccountdetail->table_detail->setItem(i,3-type,new QTableWidgetItem(""));
     uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%1").arg(balance)));
