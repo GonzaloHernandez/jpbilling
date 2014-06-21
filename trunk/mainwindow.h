@@ -46,6 +46,7 @@ private slots:
     void loadResources();
     void savePayment();
     void saveProvider();
+    void showDatePayment();
 
     void loadBillingType();
     void createGeneralBilling();
