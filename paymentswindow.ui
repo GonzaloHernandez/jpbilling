@@ -28,6 +28,12 @@
    </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>0</height>
+      </size>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -92,9 +98,6 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
-          <widget class="QLineEdit" name="lineedit_detail"/>
-         </item>
          <item row="2" column="1">
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
@@ -114,6 +117,42 @@
              </property>
              <property name="text">
               <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="5" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLineEdit" name="lineedit_detail"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_voucher">
+             <property name="text">
+              <string>CE</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLineEdit" name="lineedit_voucher">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>60</width>
+               <height>16777215</height>
+              </size>
              </property>
             </widget>
            </item>

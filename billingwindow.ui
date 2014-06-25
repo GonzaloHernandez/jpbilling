@@ -42,16 +42,9 @@
           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_date">
+          <widget class="QLabel" name="label_date0">
            <property name="text">
             <string>Fecha de Facturación</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDateEdit" name="dateedit_date">
-           <property name="displayFormat">
-            <string>yyyy-MM-dd</string>
            </property>
           </widget>
          </item>
@@ -93,7 +86,46 @@
           </widget>
          </item>
          <item row="4" column="1">
-          <widget class="QLineEdit" name="lineedit_voucher"/>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <item>
+            <widget class="QLineEdit" name="lineedit_voucher">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkbox_voucher">
+             <property name="text">
+              <string>Usar</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="0" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QDateEdit" name="dateedit_date">
+             <property name="displayFormat">
+              <string>dd-MM-yy</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_date">
+             <property name="frameShape">
+              <enum>QFrame::Box</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>
@@ -125,6 +157,20 @@
              </property>
             </widget>
            </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_at">
+             <property name="text">
+              <string>Registrar con fecha</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QDateEdit" name="dateedit_at">
+             <property name="displayFormat">
+              <string>dd-MM-yy</string>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="1">
             <widget class="QDateEdit" name="dateedit_since">
              <property name="dateTime">
@@ -138,21 +184,7 @@
               </datetime>
              </property>
              <property name="displayFormat">
-              <string>yyyy-MM-dd</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_at">
-             <property name="text">
-              <string>Registrar con fecha</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QDateEdit" name="dateedit_at">
-             <property name="displayFormat">
-              <string>yyyy-MM-dd</string>
+              <string>dd-MM-yy</string>
              </property>
             </widget>
            </item>
@@ -212,16 +244,9 @@
           <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
          </property>
          <item row="0" column="0">
-          <widget class="QLabel" name="label_p_date">
+          <widget class="QLabel" name="label_p_date0">
            <property name="text">
             <string>Fecha</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDateEdit" name="dateedit_p_date">
-           <property name="displayFormat">
-            <string>yyyy-MM-dd</string>
            </property>
           </widget>
          </item>
@@ -274,6 +299,30 @@
          </item>
          <item row="2" column="1">
           <widget class="QComboBox" name="combobox_p_home"/>
+         </item>
+         <item row="0" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QDateEdit" name="dateedit_p_date">
+             <property name="displayFormat">
+              <string>dd-MM-yy</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_p_date">
+             <property name="frameShape">
+              <enum>QFrame::Box</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </item>

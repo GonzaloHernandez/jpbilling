@@ -64,6 +64,7 @@ void MainWindow::openPayments()
   connect(uipayments->combobox_provider,SIGNAL(currentTextChanged(QString)),uipayments->dateedit_date,SLOT(setFocus()));
   connect(uipayments->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDatePayment()));
   connect(uipayments->lineedit_value,SIGNAL(editingFinished()),uipayments->lineedit_detail,SLOT(setFocus()));
+  connect(uipayments->lineedit_detail,SIGNAL(editingFinished()),uipayments->lineedit_voucher,SLOT(setFocus()));
   loadProvidersType();
   loadProviders();
   loadResources();
@@ -99,6 +100,9 @@ void MainWindow::openBilling()
   connect(uibilling->button_saveparticularbilling,SIGNAL(clicked()),this,SLOT(saveParticularBilling()));
   connect(uibilling->button_generate,SIGNAL(clicked()),this,SLOT(loadPenalties()));
   connect(uibilling->button_savepenalties,SIGNAL(clicked()),this,SLOT(savePenalties()));
+  connect(uibilling->checkbox_voucher,SIGNAL(clicked(bool)),uibilling->lineedit_voucher,SLOT(setEnabled(bool)));
+  connect(uibilling->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateBilling()));
+  connect(uibilling->dateedit_p_date,SIGNAL(editingFinished()),this,SLOT(showDatePBilling()));
   loadBillingType();
 }
 
@@ -118,13 +122,13 @@ QWidget* MainWindow::openBillingList()
   subwindow->setMinimumWidth(330);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
-  uibillinglist->table_billing->setHorizontalHeaderLabels(labels<<"Casa"<<"Valor"<<"Comprobante");
+  uibillinglist->table_billing->setHorizontalHeaderLabels(labels<<"Casa"<<"Valor"<<"CI");
   uibillinglist->label_number->setHidden(true);
   uibillinglist->label_detail->setHidden(true);
   uibillinglist->label_account0->setHidden(true);
   uibillinglist->label_account1->setHidden(true);
   uibillinglist->label_date->setHidden(true);
-  connect(uibillinglist->button_save,SIGNAL(clicked()),this,SLOT(saveBillingList()));
+  connect(uibillinglist->button_save,SIGNAL(clicked()),this,SLOT(saveGeneralBilling()));
   return subwindow;
 }
 
@@ -165,6 +169,7 @@ void MainWindow::openCollect()
   connect(uicollect->combobox_home,SIGNAL(currentTextChanged(QString)),this,SLOT(loadDebut()));
   connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
   connect(uicollect->table_detail,SIGNAL(cellChanged(int,int)),this,SLOT(resumeCollect(int,int)));
+  connect(uicollect->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateCollect()));
   uicollect->dateedit_date->setDate(QDate::currentDate());
   loadOwners();
 }
@@ -321,14 +326,11 @@ void MainWindow::savePayment()
     number = query.value(0).toInt()+1;
   }
 
-//  account0    = uipayments->combobox_type->currentData().toInt();
   account0    = uipayments->combobox_type->currentText().split(" ").at(0).toInt();
-//  account1    = uipayments->combobox_from->currentData().toInt();
   account1    = uipayments->combobox_from->currentText().split(" ").at(0).toInt();
-  detail      = uipayments->lineedit_detail->text();
+  detail      = uipayments->lineedit_detail->text()+QString(" [CE: %1").arg(uipayments->lineedit_voucher->text());
   date        = uipayments->dateedit_date->date().toString("yyyy-MM-dd");
   value       = uipayments->lineedit_value->text().toInt();
-//  descriptor  = uipayments->combobox_provider->currentData().toString();
   descriptor  = uipayments->combobox_provider->currentText().split(" ").at(0);
 
   if (uipayments->combobox_type->currentText()=="") {
@@ -348,10 +350,10 @@ void MainWindow::savePayment()
     return;
   }
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
 
-  QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
@@ -396,6 +398,23 @@ void MainWindow::showDatePayment()
   uipayments->lineedit_value->setFocus();
 }
 
+void MainWindow::showDateBilling()
+{
+  uibilling->label_date->setText(uibilling->dateedit_date->date().toString("dd-MMM-yyyy"));
+  uibilling->lineedit_value->setFocus();
+}
+
+void MainWindow::showDatePBilling()
+{
+  uibilling->label_p_date->setText(uibilling->dateedit_p_date->date().toString("dd-MMM-yyyy"));
+}
+
+void MainWindow::showDateCollect()
+{
+  uicollect->label_data->setText(uicollect->dateedit_date->date().toString("dd-MMM-yyyy"));
+  uicollect->lineedit_voucher->setFocus();
+}
+
 void MainWindow::loadBillingType()
 {
   QSqlQuery query;
@@ -422,7 +441,7 @@ void MainWindow::createGeneralBilling()
   QSqlQuery query;
   int       number = 1;
   int       value;
-  int       voucher;
+  int       voucher = 0;
   QString   handler;
 
   query.exec("SELECT max(number) FROM entries");
@@ -432,7 +451,9 @@ void MainWindow::createGeneralBilling()
 
 
   value   = uibilling->lineedit_value->text().toInt();
-  voucher = uibilling->lineedit_voucher->text().toInt();
+  if (uibilling->checkbox_voucher->isChecked()) {
+    voucher = uibilling->lineedit_voucher->text().toInt();
+  }
 //  handler = uibilling->combobox_type->currentData().toString();
   handler = uibilling->combobox_type->currentText().split(" ").at(0);
 
@@ -442,7 +463,7 @@ void MainWindow::createGeneralBilling()
   uibillinglist->label_detail->setText(uibilling->lineedit_detail->text());
   uibillinglist->label_account0->setText(handler);
   uibillinglist->label_account1->setText(QString("%1").arg(425035*100 + handler.toInt()%100));
-  uibillinglist->label_date->setText(uibilling->dateedit_date->text());
+  uibillinglist->label_date->setText(uibilling->dateedit_date->date().toString("yyyy-MM-dd"));
 
   int i=0;
   while (query.next()) {
@@ -450,7 +471,7 @@ void MainWindow::createGeneralBilling()
     uibillinglist->table_billing->setItem(i,1,new QTableWidgetItem(QString("%1").arg(value)));
     uibillinglist->table_billing->setItem(i,2,new QTableWidgetItem(QString("%1").arg(voucher)));
 
-    voucher++;
+    if (uibilling->checkbox_voucher->isChecked()) { voucher++; }
     i++;
   }
   list->show();
@@ -466,7 +487,7 @@ void MainWindow::loadPenalties()
                                 "FROM entries,accounts "
                                 "WHERE account = 132030 AND joinentry IS NULL AND type=0 AND date >= '%1' "
                                 "AND entries.account=accounts.number "
-                                "ORDER BY descriptorid,date").arg(uibilling->dateedit_since->text());
+                                "ORDER BY descriptorid,date").arg(uibilling->dateedit_since->date().toString("yyyy-MM-dd"));
   query.exec(querytext);
   int i=0;
   while (query.next()) {
@@ -488,7 +509,7 @@ void MainWindow::savePenalties()
   QString detail;
   int     account0  = 132035;
   int     account1  = 42503535;
-  QString date      = uibilling->dateedit_at->text();
+  QString date      = uibilling->dateedit_at->date().toString("yyyy-MM-dd");
   QString home;
 
   int     value;
@@ -503,10 +524,10 @@ void MainWindow::savePenalties()
     value     = uibilling->table_penalties->item(i,3)->text().toInt();
     detail    = QString("No pago de: ")+uibilling->table_penalties->item(i,1)->text();
 
-    QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
+    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
     query.exec(querytext0);
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
     query.exec(querytext1);
 
     number++;
@@ -531,12 +552,12 @@ void MainWindow::saveGeneralBilling()
     name      = uibillinglist->table_billing->item(i,0)->text();
     value     = uibillinglist->table_billing->item(i,1)->text().toInt();
     voucher   = uibillinglist->table_billing->item(i,2)->text().toInt();
-    detail    = uibillinglist->label_detail->text() + QString(" [Comprobante %1]").arg(voucher);
+    detail    = uibillinglist->label_detail->text() + QString(" [CI: %1]").arg(voucher);
 
-    QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(name);
+    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(name);
     query.exec(querytext0);
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(name);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(name);
     query.exec(querytext1);
 
     number++;
@@ -564,14 +585,14 @@ void MainWindow::saveParticularBilling()
   account0    = uibilling->combobox_p_type->currentText().split(" ").at(0).toInt();
   account1    = 425035*100 + account0%100;
   detail      = uibilling->lineedit_p_detail->text();
-  date        = uibilling->dateedit_p_date->text();
+  date        = uibilling->dateedit_p_date->date().toString("yyyy-MM-dd");
   value       = uibilling->lineedit_p_value->text().toInt();
   descriptor  = uibilling->combobox_p_home->currentText();
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
 
-  QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
@@ -680,12 +701,12 @@ void MainWindow::loadDebut()
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
                                 "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n)"
                                 "FROM entries,accounts "
-                                "WHERE account LIKE '1320%' AND descriptorid='%1' AND joinentry IS NULL AND type=0 "
+                                "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
                                 "AND entries.account=accounts.number").arg(id);
   query.exec(querytext);
   int i=0,total=0;
   while (query.next()) {
-    if (!query.value(6).isNull() && query.value(5).toInt()>query.value(6).toInt()) continue;
+    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(6).toInt()) continue;
     uicollect->table_detail->insertRow(uicollect->table_detail->rowCount());
     uicollect->table_detail->setItem(i,0,new QTableWidgetItem(query.value(3).toString()));
     uicollect->table_detail->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
@@ -724,27 +745,28 @@ void MainWindow::saveCollect()
   }
 
   account0    = 110505; // General cashing
-  date        = uicollect->dateedit_date->text();
+  date        = uicollect->dateedit_date->date().toString("yyyy-MM-dd");
   voucher     = uicollect->lineedit_voucher->text();
   value       = uicollect->label_total->text().toInt();
-  detail      = QString("Recaudo [Comprobante: %1]").arg(voucher);
+  detail      = QString("Recaudo [CI: %1]").arg(voucher);
   descriptor  = uicollect->combobox_home->currentText();
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
 
+  int record = 2;
   for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
     value       = uicollect->table_detail->item(i,3)->text().toInt();
     if (value==0) continue;
     account1    = uicollect->table_detail->item(i,5)->text().toInt();
-    detail      = uicollect->table_detail->item(i,1)->text() + QString(" [Comprobante: %1]").arg(voucher);
     joinentry   = uicollect->table_detail->item(i,4)->text().toInt();
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%2,'%3',%4,%5,'%6','%7',%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%9,%2,'%3',%4,%5,'%6','%7',%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry).arg(record);
     query.exec(querytext1);
 
     QString querytext2 = QString("UPDATE entries SET joinentry=%1 WHERE number=%2 AND account=%3").arg(number).arg(joinentry).arg(account1);
     query.exec(querytext2);
+    record ++;
   }
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
