@@ -148,12 +148,6 @@ void MainWindow::openCollect()
   subwindow->setMinimumWidth(600);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
-  uicollect->table_history->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
-  uicollect->table_history->setColumnWidth(0, 90);
-  uicollect->table_history->setColumnWidth(1,200);
-  uicollect->table_history->setColumnWidth(2, 80);
-  uicollect->table_history->setColumnWidth(3, 80);
-  labels.clear();
   uicollect->table_detail->setHorizontalHeaderLabels(labels<<"Concepto"<<"Detalle"<<"Deuda"<<"Valor");
   uicollect->table_detail->setColumnWidth(0,190);
   uicollect->table_detail->setColumnWidth(1,170);
@@ -161,17 +155,13 @@ void MainWindow::openCollect()
   uicollect->table_detail->setColumnWidth(3, 90);
   uicollect->table_detail->setColumnHidden(4,true);
   uicollect->table_detail->setColumnHidden(5,true);
-  labels.clear();
-  uicollect->table_summary->setHorizontalHeaderLabels(labels<<"Concepto"<<"Total");
-  uicollect->table_summary->setColumnWidth(0,200);
-  uicollect->table_summary->setColumnWidth(1,100);
   subwindow->show();
-  connect(uicollect->combobox_home,SIGNAL(currentTextChanged(QString)),this,SLOT(loadDebut()));
+  connect(uicollect->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadDebut()));
   connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
   connect(uicollect->table_detail,SIGNAL(cellChanged(int,int)),this,SLOT(resumeCollect(int,int)));
   connect(uicollect->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateCollect()));
   uicollect->dateedit_date->setDate(QDate::currentDate());
-  loadOwners();
+  uicollect->lineedit_home->setFocus();
 }
 
 void MainWindow::openPUC()
@@ -273,8 +263,7 @@ void MainWindow::openHomeHistory()
   uihomehistory->table_history->setColumnWidth(4, 80);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
-  connect(uihomehistory->combobox_home,SIGNAL(currentTextChanged(QString)),this,SLOT(loadHistory()));
-  loadHomesHistoryWindow();
+  connect(uihomehistory->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadHistory()));
 }
 
 
@@ -485,16 +474,19 @@ void MainWindow::loadPenalties()
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value,descriptorid,"
                                 "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
                                 "FROM entries,accounts "
-                                "WHERE account = 132030 AND joinentry IS NULL AND type=0 AND date >= '%1' "
+                                "WHERE account = 132030 AND type=0 AND date >= '%1' "
                                 "AND entries.account=accounts.number "
                                 "ORDER BY descriptorid,date").arg(uibilling->dateedit_since->date().toString("yyyy-MM-dd"));
   query.exec(querytext);
   int i=0;
   while (query.next()) {
+    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(6).toInt()) continue;
     uibilling->table_penalties->insertRow(uibilling->table_penalties->rowCount());
     uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(6).toString()));
     uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
-    uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(query.value(5).toString()));
+    int debut = query.value(5).toInt();
+    if (!query.value(6).isNull()) debut -= query.value(6).toInt();
+    uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(QString("%1").arg(debut)));
     uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(uibilling->lineedit_penalty->text()));
     for (int c=0; c<3; c++) {
       uibilling->table_penalties->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
@@ -601,9 +593,14 @@ void MainWindow::saveParticularBilling()
 void MainWindow::loadOwners()
 {
   QSqlQuery query;
-  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
-  while(query.next()) {
-    uicollect->combobox_home->addItem(query.value(0).toString(),query.value(0));
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1 AND id = 'Casa%1'").arg(uicollect->lineedit_home->text()));
+  if (query.next()) {
+    uicollect->label_home->setText(query.value(1).toString());
+    uicollect->dateedit_date->setFocus();
+  }
+  else {
+    uicollect->label_data->setText("");
+    uicollect->lineedit_home->selectAll();
   }
 }
 
@@ -693,16 +690,30 @@ void MainWindow::saveProvidersWindow()
 
 void MainWindow::loadDebut()
 {
-  uicollect->table_detail->setRowCount(0);
-
-  QString id = uicollect->combobox_home->currentText();
 
   QSqlQuery query;
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1 AND id = 'Casa%1'").arg(uicollect->lineedit_home->text()));
+  if (query.next()) {
+    uicollect->label_home->setText(query.value(0).toString());
+    uicollect->label_owner->setText(query.value(1).toString());
+    uicollect->dateedit_date->setFocus();
+  }
+  else {
+    uicollect->label_data->setText("");
+    uicollect->lineedit_home->selectAll();
+    return;
+  }
+
+  uicollect->table_detail->setRowCount(0);
+
+  QString id = uicollect->label_home->text();
+
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
                                 "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n)"
                                 "FROM entries,accounts "
                                 "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
-                                "AND entries.account=accounts.number").arg(id);
+                                "AND entries.account=accounts.number "
+                                "ORDER BY date").arg(id);
   query.exec(querytext);
   int i=0,total=0;
   while (query.next()) {
@@ -722,7 +733,7 @@ void MainWindow::loadDebut()
       uicollect->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     }
     i++;
-    total += query.value(5).toInt();
+    total += debut; //query.value(5).toInt();
   }
   uicollect->label_debt->setText(QString("%1").arg(total));
 }
@@ -749,7 +760,7 @@ void MainWindow::saveCollect()
   voucher     = uicollect->lineedit_voucher->text();
   value       = uicollect->label_total->text().toInt();
   detail      = QString("Recaudo [CI: %1]").arg(voucher);
-  descriptor  = uicollect->combobox_home->currentText();
+  descriptor  = uicollect->lineedit_home->text();
 
   QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
   query.exec(querytext0);
@@ -783,22 +794,24 @@ void MainWindow::resumeCollect(int,int col)
   }
 }
 
-void MainWindow::loadHomesHistoryWindow() {
-  QSqlQuery query;
-  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
-  while (query.next()) {
-    uihomehistory->combobox_home->addItem(query.value(0).toString(),query.value(0).toString());
-  }
-}
-
 void MainWindow::loadHistory()
 {
-  QString id = uihomehistory->combobox_home->currentText();
   QSqlQuery query;
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1 AND id = 'Casa%1'").arg(uihomehistory->lineedit_home->text()));
+  if (query.next()) {
+    uihomehistory->label_home->setText(query.value(0).toString());
+    uihomehistory->label_owner->setText(query.value(1).toString());
+  }
+  else {
+    return;
+  }
+  uihomehistory->lineedit_home->selectAll();
+
+  QString id = uihomehistory->label_home->text();
   query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
   query.next();
   uihomehistory->label_owner->setText(query.value(0).toString());
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry FROM entries,accounts WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account").arg(id));
+  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry FROM entries,accounts WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account ORDER BY date").arg(id));
 
   uihomehistory->table_history->setRowCount(0);
 

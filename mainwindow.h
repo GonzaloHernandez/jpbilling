@@ -72,7 +72,6 @@ private slots:
     void saveCollect();
     void resumeCollect(int,int);
 
-    void loadHomesHistoryWindow();
     void loadHistory();
 
     void openAccountDetail();
