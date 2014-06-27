@@ -94,6 +94,12 @@ void MainWindow::openBilling()
   uibilling->table_penalties->setColumnWidth(1,150);
   uibilling->table_penalties->setColumnWidth(2,80);
   uibilling->table_penalties->setColumnWidth(3,80);
+  labels.clear();
+  labels<<"Valor expensa"<<"Valor multa";
+  uibilling->table_parms->setHorizontalHeaderLabels(labels);
+  uibilling->table_parms->setColumnWidth(0,100);
+  uibilling->table_parms->setColumnWidth(1,100);
+
   uibilling->dateedit_at->setDate(QDate::currentDate());
   subwindow->show();
   connect(uibilling->button_savegeneralbilling,SIGNAL(clicked()),this,SLOT(createGeneralBilling()));
@@ -103,6 +109,9 @@ void MainWindow::openBilling()
   connect(uibilling->checkbox_voucher,SIGNAL(clicked(bool)),uibilling->lineedit_voucher,SLOT(setEnabled(bool)));
   connect(uibilling->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateBilling()));
   connect(uibilling->dateedit_p_date,SIGNAL(editingFinished()),this,SLOT(showDatePBilling()));
+  connect(uibilling->tabWidget,SIGNAL(currentChanged(int)),this,SLOT(loadParms()));
+  connect(uibilling->dateedit_since,SIGNAL(editingFinished()),this,SLOT(showDatePenaltiesSince()));
+  connect(uibilling->dateedit_at,SIGNAL(editingFinished()),this,SLOT(showDatePenaltiesAt()));
   loadBillingType();
 }
 
@@ -469,6 +478,36 @@ void MainWindow::createGeneralBilling()
   list->show();
 }
 
+void MainWindow::loadParms()
+{
+  QSqlQuery query;
+  QString querytext = QString("SELECT value FROM entries "
+                              "WHERE account = 132030 AND type=0 AND date >= '2014-01-01' "
+                              "GROUP BY value");
+  query.exec(querytext);
+  uibilling->table_parms->setRowCount(0);
+  int i=0;
+  while (query.next()) {
+    uibilling->table_parms->insertRow(uibilling->table_parms->rowCount());
+    uibilling->table_parms->setItem(i,0,new QTableWidgetItem(QString("%L1").arg(query.value(0).toInt())));
+    uibilling->table_parms->setItem(i,1,new QTableWidgetItem(QString("%L1").arg(0)));
+    uibilling->table_parms->item(i,0)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    uibilling->table_parms->item(i,1)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    uibilling->table_parms->item(i,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    i++;
+  }
+  uibilling->dateedit_since->setFocus();
+}
+
+int penalty(QTableWidget* table,QString value) {
+  for(int i=0; i<table->rowCount(); i++) {
+    if (table->item(i,0)->text() == value) {
+      return table->item(i,1)->text().toInt();
+    }
+  }
+  return 0;
+}
+
 void MainWindow::loadPenalties()
 {
   uibilling->table_penalties->setRowCount(0);
@@ -483,7 +522,7 @@ void MainWindow::loadPenalties()
   query.exec(querytext);
   int i=0;
   while (query.next()) {
-    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(6).toInt()) continue;
+    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(7).toInt()) continue;
 
     QSqlQuery fastquery;
     QString fastquerytext =   QString("SELECT count(*) "
@@ -498,9 +537,9 @@ void MainWindow::loadPenalties()
     uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(6).toString()));
     uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()+QString(" [%1]").arg(consecutive)));
     int debut = query.value(5).toInt();
-    if (!query.value(6).isNull()) debut -= query.value(6).toInt();
+    if (!query.value(6).isNull()) debut -= query.value(7).toInt();
     uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(debut)));
-    uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(uibilling->lineedit_penalty->text()));
+    uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(QString("%1").arg(penalty(uibilling->table_parms,uibilling->table_penalties->item(i,2)->text()))));
     for (int c=0; c<3; c++) {
       uibilling->table_penalties->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     }
@@ -539,6 +578,19 @@ void MainWindow::savePenalties()
   }
   QMessageBox::information(this,"Registros guardados",QString("%1 asientos contables procesados").arg(uibilling->table_penalties->rowCount()));
   uibilling->table_penalties->setRowCount(0);
+}
+
+void MainWindow::showDatePenaltiesSince()
+{
+  uibilling->label_since->setText(uibilling->dateedit_since->date().toString("dd-MMM-yyyy"));
+  uibilling->dateedit_at->setFocus();
+}
+
+void MainWindow::showDatePenaltiesAt()
+{
+  uibilling->label_at->setText(uibilling->dateedit_at->date().toString("dd-MMM-yyyy"));
+  uibilling->table_parms->setFocus();
+  uibilling->table_parms->setCurrentCell(0,1);
 }
 
 void MainWindow::saveGeneralBilling()
@@ -751,6 +803,7 @@ void MainWindow::loadDebut()
     total += debut; //query.value(5).toInt();
   }
   uicollect->label_debt->setText(QString("%L1").arg(total));
+  uicollect->label_debt->setToolTip(QString("%1").arg(total));
   uicollect->label_balance->setText(QString("%L1").arg(total));
   uicollect->table_detail->setCurrentCell(0,3);
 }
@@ -800,6 +853,8 @@ void MainWindow::saveCollect()
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
   uicollect->lineedit_home->setText("");
+  uicollect->label_home->setText("");
+  uicollect->label_owner->setText("");
   uicollect->lineedit_voucher->setText("");
   uicollect->table_detail->setRowCount(0);
   uicollect->lineedit_home->setFocus();
@@ -815,7 +870,7 @@ void MainWindow::resumeCollect(int,int col)
       total += uicollect->table_detail->item(i,3)->text().toInt();
     }
     uicollect->label_total->setText(QString("%L1").arg(total));
-    uicollect->label_balance->setText(QString("%L1").arg(uicollect->label_debt->text().toInt()-total));
+    uicollect->label_balance->setText(QString("%L1").arg(uicollect->label_debt->toolTip().toInt()-total));
 
   }
 }
