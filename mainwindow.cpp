@@ -160,6 +160,7 @@ void MainWindow::openCollect()
   connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
   connect(uicollect->table_detail,SIGNAL(cellChanged(int,int)),this,SLOT(resumeCollect(int,int)));
   connect(uicollect->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateCollect()));
+  connect(uicollect->lineedit_voucher,SIGNAL(editingFinished()),uicollect->table_detail,SLOT(setFocus()));
   uicollect->dateedit_date->setDate(QDate::currentDate());
   uicollect->lineedit_home->setFocus();
 }
@@ -253,7 +254,7 @@ void MainWindow::openHomeHistory()
   uihomehistory = new Ui::HomeHistoryWindow;
   uihomehistory->setupUi(subwindow);
   subwindow->setWindowTitle("Historial por Casa");
-  subwindow->setMinimumWidth(620);
+  subwindow->setMinimumWidth(630);
   QStringList labels;
   uihomehistory->table_history->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
   uihomehistory->table_history->setColumnWidth(0, 90);
@@ -309,6 +310,7 @@ void MainWindow::savePayment()
   int       value;
   QString   detail;
   QString   descriptor;
+  int       voucher;
 
   query.exec("SELECT max(number) FROM entries");
   if (query.next()) {
@@ -317,10 +319,11 @@ void MainWindow::savePayment()
 
   account0    = uipayments->combobox_type->currentText().split(" ").at(0).toInt();
   account1    = uipayments->combobox_from->currentText().split(" ").at(0).toInt();
-  detail      = uipayments->lineedit_detail->text()+QString(" [CE: %1").arg(uipayments->lineedit_voucher->text());
+  detail      = uipayments->lineedit_detail->text();
   date        = uipayments->dateedit_date->date().toString("yyyy-MM-dd");
   value       = uipayments->lineedit_value->text().toInt();
   descriptor  = uipayments->combobox_provider->currentText().split(" ").at(0);
+  voucher     = uipayments->lineedit_voucher->text().toInt();
 
   if (uipayments->combobox_type->currentText()=="") {
     QMessageBox::information(this,"Error","Debe seleccionar un tipo de Gasto");
@@ -339,10 +342,10 @@ void MainWindow::savePayment()
     return;
   }
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor).arg(voucher);
   query.exec(querytext0);
 
-  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(voucher);
   query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
@@ -457,7 +460,7 @@ void MainWindow::createGeneralBilling()
   int i=0;
   while (query.next()) {
     uibillinglist->table_billing->setItem(i,0,new QTableWidgetItem(query.value(0).toString()));
-    uibillinglist->table_billing->setItem(i,1,new QTableWidgetItem(QString("%1").arg(value)));
+    uibillinglist->table_billing->setItem(i,1,new QTableWidgetItem(QString("%L1").arg(value)));
     uibillinglist->table_billing->setItem(i,2,new QTableWidgetItem(QString("%1").arg(voucher)));
 
     if (uibilling->checkbox_voucher->isChecked()) { voucher++; }
@@ -481,12 +484,22 @@ void MainWindow::loadPenalties()
   int i=0;
   while (query.next()) {
     if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(6).toInt()) continue;
+
+    QSqlQuery fastquery;
+    QString fastquerytext =   QString("SELECT count(*) "
+                                      "FROM entries "
+                                      "WHERE account = 132035 AND detail like '%1%' "
+                                      "AND descriptorid = '%2'").arg(query.value(4).toString()).arg(query.value(6).toString());
+    fastquery.exec(fastquerytext);
+    fastquery.next();
+    int consecutive = fastquery.value(0).toInt()+1;
+
     uibilling->table_penalties->insertRow(uibilling->table_penalties->rowCount());
     uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(6).toString()));
-    uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
+    uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()+QString(" [%1]").arg(consecutive)));
     int debut = query.value(5).toInt();
     if (!query.value(6).isNull()) debut -= query.value(6).toInt();
-    uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(QString("%1").arg(debut)));
+    uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(debut)));
     uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(uibilling->lineedit_penalty->text()));
     for (int c=0; c<3; c++) {
       uibilling->table_penalties->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
@@ -514,12 +527,12 @@ void MainWindow::savePenalties()
   for (int i=0; i<uibilling->table_penalties->rowCount(); i++) {
     home      = uibilling->table_penalties->item(i,0)->text();
     value     = uibilling->table_penalties->item(i,3)->text().toInt();
-    detail    = QString("No pago de: ")+uibilling->table_penalties->item(i,1)->text();
+    detail    = uibilling->table_penalties->item(i,1)->text();
 
-    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
+    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
     query.exec(querytext0);
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
     query.exec(querytext1);
 
     number++;
@@ -544,12 +557,12 @@ void MainWindow::saveGeneralBilling()
     name      = uibillinglist->table_billing->item(i,0)->text();
     value     = uibillinglist->table_billing->item(i,1)->text().toInt();
     voucher   = uibillinglist->table_billing->item(i,2)->text().toInt();
-    detail    = uibillinglist->label_detail->text() + QString(" [CI: %1]").arg(voucher);
+    detail    = uibillinglist->label_detail->text();
 
-    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(name);
+    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(name).arg(voucher);
     query.exec(querytext0);
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(name);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(name).arg(voucher);
     query.exec(querytext1);
 
     number++;
@@ -567,6 +580,7 @@ void MainWindow::saveParticularBilling()
   int       value;
   QString   detail;
   QString   descriptor;
+  int       voucher;
 
   query.exec("SELECT max(number) FROM entries");
   if (query.next()) {
@@ -580,11 +594,12 @@ void MainWindow::saveParticularBilling()
   date        = uibilling->dateedit_p_date->date().toString("yyyy-MM-dd");
   value       = uibilling->lineedit_p_value->text().toInt();
   descriptor  = uibilling->combobox_p_home->currentText();
+  voucher     = uibilling->lineedit_p_voucher->text().toInt();
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor).arg(voucher);
   query.exec(querytext0);
 
-  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(voucher);
   query.exec(querytext1);
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
@@ -725,7 +740,7 @@ void MainWindow::loadDebut()
     int debut = query.value(5).toInt();
     if (!query.value(6).isNull()) debut -= query.value(6).toInt();
 
-    uicollect->table_detail->setItem(i,2,new QTableWidgetItem(QString("%1").arg(debut)));
+    uicollect->table_detail->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(debut)));
     uicollect->table_detail->setItem(i,3,new QTableWidgetItem("0"));
     uicollect->table_detail->setItem(i,4,new QTableWidgetItem(query.value(0).toString()));
     uicollect->table_detail->setItem(i,5,new QTableWidgetItem(query.value(1).toString()));
@@ -735,7 +750,9 @@ void MainWindow::loadDebut()
     i++;
     total += debut; //query.value(5).toInt();
   }
-  uicollect->label_debt->setText(QString("%1").arg(total));
+  uicollect->label_debt->setText(QString("%L1").arg(total));
+  uicollect->label_balance->setText(QString("%L1").arg(total));
+  uicollect->table_detail->setCurrentCell(0,3);
 }
 
 void MainWindow::saveCollect()
@@ -759,10 +776,10 @@ void MainWindow::saveCollect()
   date        = uicollect->dateedit_date->date().toString("yyyy-MM-dd");
   voucher     = uicollect->lineedit_voucher->text();
   value       = uicollect->label_total->text().toInt();
-  detail      = QString("Recaudo [CI: %1]").arg(voucher);
-  descriptor  = uicollect->lineedit_home->text();
+  detail      = QString("Recaudo");
+  descriptor  = uicollect->label_home->text();
 
-  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor);
+  QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,%8)").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(descriptor).arg(voucher);
   query.exec(querytext0);
 
   int record = 2;
@@ -771,8 +788,9 @@ void MainWindow::saveCollect()
     if (value==0) continue;
     account1    = uicollect->table_detail->item(i,5)->text().toInt();
     joinentry   = uicollect->table_detail->item(i,4)->text().toInt();
+    detail      = uicollect->table_detail->item(i,1)->text();
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%9,%2,'%3',%4,%5,'%6','%7',%8)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry).arg(record);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%9,%2,'%3',%4,%5,'%6','%7',%8,%10)").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry).arg(record).arg(voucher);
     query.exec(querytext1);
 
     QString querytext2 = QString("UPDATE entries SET joinentry=%1 WHERE number=%2 AND account=%3").arg(number).arg(joinentry).arg(account1);
@@ -781,6 +799,12 @@ void MainWindow::saveCollect()
   }
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
+  uicollect->lineedit_home->setText("");
+  uicollect->lineedit_voucher->setText("");
+  uicollect->table_detail->setRowCount(0);
+  uicollect->lineedit_home->setFocus();
+  uicollect->label_debt->setText("");
+  uicollect->label_total->setText("");
 }
 
 void MainWindow::resumeCollect(int,int col)
@@ -790,7 +814,9 @@ void MainWindow::resumeCollect(int,int col)
     for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
       total += uicollect->table_detail->item(i,3)->text().toInt();
     }
-    uicollect->label_total->setText(QString("%1").arg(total));
+    uicollect->label_total->setText(QString("%L1").arg(total));
+    uicollect->label_balance->setText(QString("%L1").arg(uicollect->label_debt->text().toInt()-total));
+
   }
 }
 
@@ -819,7 +845,7 @@ void MainWindow::loadHistory()
   int balance = 0;
   while (query.next()) {
     uihomehistory->table_history->insertRow(uihomehistory->table_history->rowCount());
-    QString date    = query.value(0).toDate().toString("yyyy-MM-dd");
+    QString date    = query.value(0).toDate().toString("dd-MMM-yyyy");
     QString account = query.value(1).toString();
     int     type    = query.value(2).toInt();
     int     value   = query.value(3).toInt();
@@ -827,10 +853,10 @@ void MainWindow::loadHistory()
     type==DEBIT?balance+=value:balance-=value;
 
     uihomehistory->table_history->setItem(i,0,new QTableWidgetItem(date));
-    uihomehistory->table_history->setItem(i,1,new QTableWidgetItem(account+": "+detail));
-    uihomehistory->table_history->setItem(i,2+type,new QTableWidgetItem(QString("%1").arg(value)));
+    uihomehistory->table_history->setItem(i,1,new QTableWidgetItem((type==DEBIT?"CxC ":"Pago ")+account+": "+detail));
+    uihomehistory->table_history->setItem(i,2+type,new QTableWidgetItem(QString("%L1").arg(value)));
     uihomehistory->table_history->setItem(i,3-type,new QTableWidgetItem(""));
-    uihomehistory->table_history->setItem(i,4,new QTableWidgetItem(QString("%1").arg(balance)));
+    uihomehistory->table_history->setItem(i,4,new QTableWidgetItem(QString("%L1").arg(balance)));
     uihomehistory->table_history->item(i,2)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
@@ -838,6 +864,7 @@ void MainWindow::loadHistory()
     for (int c=0; c<5; c++) {
       uihomehistory->table_history->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     }
+
     i++;
   }
 }
@@ -886,7 +913,7 @@ void MainWindow::loadAccountDetail(int account)
   int balance = 0;
   while (query.next()) {
     uiaccountdetail->table_detail->insertRow(uiaccountdetail->table_detail->rowCount());
-    QString date        = query.value(0).toDate().toString("yyyy-MM-dd");
+    QString date        = query.value(0).toDate().toString("dd-MMM-yyyy");
     int     type        = query.value(2).toBool();
     int     value       = query.value(3).toInt();
     QString detail      = query.value(4).toString();
@@ -895,9 +922,9 @@ void MainWindow::loadAccountDetail(int account)
 
     uiaccountdetail->table_detail->setItem(i,0,new QTableWidgetItem(date));
     uiaccountdetail->table_detail->setItem(i,1,new QTableWidgetItem(descriptor+": "+detail));
-    uiaccountdetail->table_detail->setItem(i,2+type,new QTableWidgetItem(QString("%1").arg(value)));
+    uiaccountdetail->table_detail->setItem(i,2+type,new QTableWidgetItem(QString("%L1").arg(value)));
     uiaccountdetail->table_detail->setItem(i,3-type,new QTableWidgetItem(""));
-    uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%1").arg(balance)));
+    uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%L1").arg(balance)));
     uiaccountdetail->table_detail->item(i,2)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uiaccountdetail->table_detail->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uiaccountdetail->table_detail->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
