@@ -53,8 +53,11 @@ private slots:
 
     void loadBillingType();
     void createGeneralBilling();
+    void loadParms();
     void loadPenalties();
     void savePenalties();
+    void showDatePenaltiesSince();
+    void showDatePenaltiesAt();
 
     void saveGeneralBilling();
     void saveParticularBilling();
