@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    resize(800,500);
+    resize(1000,700);
     dbconnected = false;
     connectDB();
 }
@@ -263,17 +263,18 @@ void MainWindow::openHomeHistory()
   uihomehistory = new Ui::HomeHistoryWindow;
   uihomehistory->setupUi(subwindow);
   subwindow->setWindowTitle("Historial por Casa");
-  subwindow->setMinimumWidth(630);
+  subwindow->setMinimumWidth(700);
   QStringList labels;
   uihomehistory->table_history->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
   uihomehistory->table_history->setColumnWidth(0, 90);
-  uihomehistory->table_history->setColumnWidth(1,250);
+  uihomehistory->table_history->setColumnWidth(1,320);
   uihomehistory->table_history->setColumnWidth(2, 80);
   uihomehistory->table_history->setColumnWidth(3, 80);
   uihomehistory->table_history->setColumnWidth(4, 80);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   connect(uihomehistory->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadHistory()));
+  connect(uihomehistory->button_print,SIGNAL(clicked()),this,SLOT(printHistory()));
 }
 
 
@@ -607,7 +608,7 @@ void MainWindow::saveGeneralBilling()
 
   for (int i=0; i<49; i++) {
     name      = uibillinglist->table_billing->item(i,0)->text();
-    value     = uibillinglist->table_billing->item(i,1)->text().toInt();
+    value     = uibillinglist->table_billing->item(i,1)->text().remove(QRegExp("[.,]")).toInt();
     voucher   = uibillinglist->table_billing->item(i,2)->text().toInt();
     detail    = uibillinglist->label_detail->text();
 
@@ -776,7 +777,7 @@ void MainWindow::loadDebut()
   QString id = uicollect->label_home->text();
 
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n)"
+                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n),account "
                                 "FROM entries,accounts "
                                 "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
                                 "AND entries.account=accounts.number "
@@ -798,6 +799,9 @@ void MainWindow::loadDebut()
     uicollect->table_detail->setItem(i,5,new QTableWidgetItem(query.value(1).toString()));
     for (int c=0; c<3; c++) {
       uicollect->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      if (query.value(7).toInt()==132030) {
+        uicollect->table_detail->item(i,c)->setForeground(Qt::blue);
+      }
     }
     i++;
     total += debut; //query.value(5).toInt();
@@ -892,7 +896,10 @@ void MainWindow::loadHistory()
   query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
   query.next();
   uihomehistory->label_owner->setText(query.value(0).toString());
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry FROM entries,accounts WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account ORDER BY date").arg(id));
+  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,voucher,account "
+                     "FROM entries,accounts "
+                     "WHERE descriptorid='%1' AND account like '1320%' AND accounts.number=entries.account "
+                     "ORDER BY date").arg(id));
 
   uihomehistory->table_history->setRowCount(0);
 
@@ -915,13 +922,73 @@ void MainWindow::loadHistory()
     uihomehistory->table_history->item(i,2)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    uihomehistory->table_history->item(i,1)->setToolTip(QString("Comprobante %1").arg(query.value(7).toString()));
 
     for (int c=0; c<5; c++) {
       uihomehistory->table_history->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      if (query.value(8).toInt()==132030 && query.value(2).toInt()==0) {
+        uihomehistory->table_history->item(i,c)->setForeground( Qt::blue );
+      }
     }
 
     i++;
   }
+}
+
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QPainter>
+
+int ch(int v) {
+   return 10200 * v / 200;
+}
+
+int cv(int v) {
+  return 13200 * v / 270;
+}
+
+void MainWindow::printHistory()
+{
+  QPrinter printer(QPrinter::HighResolution);
+  printer.setCreator("Me");
+  printer.setDocName("Test1");
+
+//  QPrintDialog printDialog(&printer, this);
+//  if (printDialog.exec() == QDialog::Accepted) {
+//    cout << printer.paperRect().x() << " ";
+//    cout << printer.paperRect().y() << " ";
+//    cout << printer.paperRect().width() << " ";
+//    cout << printer.paperRect().height() << endl;
+    QPainter painter(&printer);
+    QFont font = painter.font();
+
+    font.setPointSize(font.pointSize()+4);
+    painter.setFont(font);
+
+    painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
+
+    font.setPointSize(font.pointSize()-6);
+    painter.setFont(font);
+
+    int y = cv(22);
+    painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,"FECHA");
+    painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,"CONCEPTO");
+    painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,"DEBE");
+    painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,"HABER");
+    painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,"SALDO");
+
+    painter.drawLine(ch(9),cv(28),ch(189),cv(29));
+
+    for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
+      int y = cv(30+i*6);
+      painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,0)->text());
+      painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,1)->text());
+      painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,2)->text());
+      painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,3)->text());
+      painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,4)->text());
+//      painter.drawLine(ch(9),cv(36+i*6),ch(189),cv(36+i*6));
+    }
+//  }
 }
 
 void MainWindow::openAccountDetail()

@@ -76,6 +76,7 @@ private slots:
     void resumeCollect(int,int);
 
     void loadHistory();
+    void printHistory();
 
     void openAccountDetail();
     void loadAccountDetail(int);
