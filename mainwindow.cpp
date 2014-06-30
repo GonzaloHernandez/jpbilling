@@ -5,6 +5,12 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <iostream>
+#include <QPrintDialog>
+#include <QPrinter>
+#include <QPainter>
+
+#define ch(x) (int)(10200.0*x/200.0)
+#define cv(x) (int)(13200.0*x/270.0)
 
 using namespace std;
 
@@ -131,13 +137,37 @@ QWidget* MainWindow::openBillingList()
   subwindow->setMinimumWidth(330);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
-  uibillinglist->table_billing->setHorizontalHeaderLabels(labels<<"Casa"<<"Valor"<<"CI");
+  labels = labels <<"Casa"<<"Cobro"<<"CI";
+  uibillinglist->table_billing->setHorizontalHeaderLabels(labels);
+
+  QSqlQuery query;
+  query.exec("SELECT number,name FROM accounts WHERE handler = 1320");
+  int i=3;
+  while (query.next()) {
+    QTableWidgetItem* headeritem = new QTableWidgetItem(query.value(0).toString());
+    headeritem->setToolTip(query.value(1).toString());
+    uibillinglist->table_billing->setHorizontalHeaderItem(i,headeritem);
+    i++;
+  }
+  uibillinglist->table_billing->setHorizontalHeaderItem(9,new QTableWidgetItem("Total"));
+
+  uibillinglist->table_billing->setColumnWidth(0,60);
+  uibillinglist->table_billing->setColumnWidth(1,80);
+  uibillinglist->table_billing->setColumnWidth(2,50);
+  uibillinglist->table_billing->setColumnWidth(3,80);
+  uibillinglist->table_billing->setColumnWidth(4,80);
+  uibillinglist->table_billing->setColumnWidth(5,80);
+  uibillinglist->table_billing->setColumnWidth(6,80);
+  uibillinglist->table_billing->setColumnWidth(7,80);
+  uibillinglist->table_billing->setColumnWidth(8,80);
+  uibillinglist->table_billing->setColumnWidth(9,80);
   uibillinglist->label_number->setHidden(true);
   uibillinglist->label_detail->setHidden(true);
   uibillinglist->label_account0->setHidden(true);
   uibillinglist->label_account1->setHidden(true);
   uibillinglist->label_date->setHidden(true);
   connect(uibillinglist->button_save,SIGNAL(clicked()),this,SLOT(saveGeneralBilling()));
+  connect(uibillinglist->table_billing,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(printBilling(QModelIndex)));
   return subwindow;
 }
 
@@ -459,7 +489,7 @@ void MainWindow::createGeneralBilling()
 //  handler = uibilling->combobox_type->currentData().toString();
   handler = uibilling->combobox_type->currentText().split(" ").at(0);
 
-  query.exec(QString("SELECT id FROM descriptors WHERE type=1"));
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
   QWidget* list = openBillingList();
   uibillinglist->label_number->setText(QString("%1").arg(number));
   uibillinglist->label_detail->setText(uibilling->lineedit_detail->text());
@@ -470,10 +500,46 @@ void MainWindow::createGeneralBilling()
   int i=0;
   while (query.next()) {
     uibillinglist->table_billing->setItem(i,0,new QTableWidgetItem(query.value(0).toString()));
+    uibillinglist->table_billing->item(i,0)->setToolTip(query.value(1).toString());
     uibillinglist->table_billing->setItem(i,1,new QTableWidgetItem(QString("%L1").arg(value)));
     uibillinglist->table_billing->setItem(i,2,new QTableWidgetItem(QString("%1").arg(voucher)));
 
     if (uibilling->checkbox_voucher->isChecked()) { voucher++; }
+
+    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
+                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
+                                  "FROM entries,accounts "
+                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
+                                  "AND entries.account=accounts.number "
+                                  "ORDER BY date").arg(query.value(0).toString());
+    int totals[6];
+    for (int t=0; t<6; t++) totals[t]= 0;
+    int total = value;
+
+    QSqlQuery individualquery;
+    individualquery.exec(querytext);
+    while(individualquery.next()) {
+      if (!individualquery.value(6).isNull() && individualquery.value(5).toInt()<=individualquery.value(6).toInt()) continue;
+      int debut = individualquery.value(5).toInt();
+      if (!individualquery.value(6).isNull()) debut -= individualquery.value(6).toInt();
+
+      int t = (individualquery.value(1).toString().right(2).toInt()-30)/5;
+      totals[t] += debut;
+      total += debut;
+    }
+    for (int t=0; t<6; t++) {
+      uibillinglist->table_billing->setItem(i,3+t,new QTableWidgetItem(QString("%L1").arg(totals[t])));
+    }
+    uibillinglist->table_billing->setItem(i,9,new QTableWidgetItem(QString("%L1").arg(total)));
+
+    for (int c=0; c<10; c++) {
+      uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      if (c>=3) {
+        uibillinglist->table_billing->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+      }
+    }
+
+
     i++;
   }
   list->show();
@@ -592,6 +658,74 @@ void MainWindow::showDatePenaltiesAt()
   uibilling->label_at->setText(uibilling->dateedit_at->date().toString("dd-MMM-yyyy"));
   uibilling->table_parms->setFocus();
   uibilling->table_parms->setCurrentCell(0,1);
+}
+
+void MainWindow::printBilling(QModelIndex mi)
+{
+  if (mi.column()==0) {
+    int row = mi.row();
+    QString home    = uibillinglist->table_billing->item(row,0)->text();
+    QString owner   = uibillinglist->table_billing->item(row,0)->toolTip();
+    QString current = uibillinglist->table_billing->item(row,1)->text();
+    QString number  = uibillinglist->table_billing->item(row,2)->text();
+    QString t30     = uibillinglist->table_billing->item(row,3)->text();
+    QString t35     = uibillinglist->table_billing->item(row,4)->text();
+    QString t40     = uibillinglist->table_billing->item(row,5)->text();
+    QString t45     = uibillinglist->table_billing->item(row,6)->text();
+    QString t50     = uibillinglist->table_billing->item(row,7)->text();
+    QString t55     = uibillinglist->table_billing->item(row,8)->text();
+    QString t       = uibillinglist->table_billing->item(row,9)->text();
+    QString n45     = uibillinglist->table_billing->horizontalHeaderItem(6)->toolTip();
+    QString n50     = uibillinglist->table_billing->horizontalHeaderItem(7)->toolTip();
+    QString n55     = uibillinglist->table_billing->horizontalHeaderItem(8)->toolTip();
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setCreator("JP-Billing");
+    printer.setDocName(QString("Facturación %1").arg(number));
+
+    QPrintDialog printDialog(&printer, this);
+    if (printDialog.exec() == QDialog::Accepted) {
+      QPainter painter(&printer);
+
+      painter.drawText(ch( 20),cv(36.4),ch(100),cv(5),Qt::AlignLeft,owner);
+      painter.drawText(ch( 20),cv(41.3),ch(100),cv(5),Qt::AlignLeft,home);
+      double y = 51;
+      painter.drawText(ch( 45),cv(y),ch( 80),cv(4),Qt::AlignLeft,QString("(%1)").arg(uibillinglist->label_detail->text()));
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,current); y += 4.3;
+
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t35);     y += 4.3;
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t30);     y += 4.3;
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t40);     y += 4.3;
+
+      painter.drawText(ch( 45),cv(y),ch( 80),cv(4),Qt::AlignLeft,n45);
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t45);     y += 4.3;
+
+      painter.drawText(ch( 45),cv(y),ch( 80),cv(4),Qt::AlignLeft,n50);
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t50);     y += 4.3;
+
+      painter.drawText(ch( 45),cv(y),ch( 80),cv(4),Qt::AlignLeft,n55);
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t55);     y += 4.3;
+
+      y += 4.3;
+
+      QFont font = painter.font();
+      font.setBold(true);
+      font.setPointSize(font.pointSize()+1);
+      painter.setFont(font);
+
+      painter.drawText(ch( 45),cv(y),ch( 30),cv(4),Qt::AlignLeft,"TOTAL A PAGAR");
+      painter.drawText(ch(100),cv(y),ch( 30),cv(4),Qt::AlignRight,t);
+
+      y += 4.3;
+      y += 4.3;
+
+      font.setBold(false);
+      font.setPointSize(font.pointSize()-1);
+      painter.setFont(font);
+
+      painter.drawText(ch( 45),cv(y),ch(90),cv(4),Qt::AlignLeft,QString("Pago sin recargo hasta:  %1").arg("Julio-10/2014"));
+    }
+  }
 }
 
 void MainWindow::saveGeneralBilling()
@@ -777,7 +911,7 @@ void MainWindow::loadDebut()
   QString id = uicollect->label_home->text();
 
   QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n),account "
+                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
                                 "FROM entries,accounts "
                                 "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
                                 "AND entries.account=accounts.number "
@@ -799,7 +933,7 @@ void MainWindow::loadDebut()
     uicollect->table_detail->setItem(i,5,new QTableWidgetItem(query.value(1).toString()));
     for (int c=0; c<3; c++) {
       uicollect->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-      if (query.value(7).toInt()==132030) {
+      if (query.value(1).toInt()==132030) {
         uicollect->table_detail->item(i,c)->setForeground(Qt::blue);
       }
     }
@@ -915,7 +1049,16 @@ void MainWindow::loadHistory()
     type==DEBIT?balance+=value:balance-=value;
 
     uihomehistory->table_history->setItem(i,0,new QTableWidgetItem(date));
-    uihomehistory->table_history->setItem(i,1,new QTableWidgetItem((type==DEBIT?"CxC ":"Pago ")+account+": "+detail));
+    QString description = account+": "+detail;
+    if (detail.left(7) != "Condona") {
+      if (type==DEBIT) {
+        description = "CxC " + account+": "+detail;
+      }
+      else {
+        description = "Pago " + account+": "+detail;
+      }
+    }
+    uihomehistory->table_history->setItem(i,1,new QTableWidgetItem(description));
     uihomehistory->table_history->setItem(i,2+type,new QTableWidgetItem(QString("%L1").arg(value)));
     uihomehistory->table_history->setItem(i,3-type,new QTableWidgetItem(""));
     uihomehistory->table_history->setItem(i,4,new QTableWidgetItem(QString("%L1").arg(balance)));
@@ -935,30 +1078,14 @@ void MainWindow::loadHistory()
   }
 }
 
-#include <QPrintDialog>
-#include <QPrinter>
-#include <QPainter>
-
-int ch(int v) {
-   return 10200 * v / 200;
-}
-
-int cv(int v) {
-  return 13200 * v / 270;
-}
-
 void MainWindow::printHistory()
 {
   QPrinter printer(QPrinter::HighResolution);
-  printer.setCreator("Me");
-  printer.setDocName("Test1");
+  printer.setCreator("JP-Property");
+  printer.setDocName("Historial");
 
-//  QPrintDialog printDialog(&printer, this);
-//  if (printDialog.exec() == QDialog::Accepted) {
-//    cout << printer.paperRect().x() << " ";
-//    cout << printer.paperRect().y() << " ";
-//    cout << printer.paperRect().width() << " ";
-//    cout << printer.paperRect().height() << endl;
+  QPrintDialog printDialog(&printer, this);
+  if (printDialog.exec() == QDialog::Accepted) {
     QPainter painter(&printer);
     QFont font = painter.font();
 
@@ -980,15 +1107,16 @@ void MainWindow::printHistory()
     painter.drawLine(ch(9),cv(28),ch(189),cv(29));
 
     for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
-      int y = cv(30+i*6);
+      int first = 30+i*6 ;
+      int y = cv(first);
+      cout << y << "  " << ch(9) << endl;
       painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,0)->text());
       painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,1)->text());
       painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,2)->text());
       painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,3)->text());
       painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,4)->text());
-//      painter.drawLine(ch(9),cv(36+i*6),ch(189),cv(36+i*6));
     }
-//  }
+  }
 }
 
 void MainWindow::openAccountDetail()

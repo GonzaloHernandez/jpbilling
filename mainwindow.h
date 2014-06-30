@@ -58,7 +58,7 @@ private slots:
     void savePenalties();
     void showDatePenaltiesSince();
     void showDatePenaltiesAt();
-
+    void printBilling(QModelIndex);
     void saveGeneralBilling();
     void saveParticularBilling();
 
