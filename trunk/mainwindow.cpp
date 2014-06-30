@@ -301,12 +301,14 @@ void MainWindow::openHomeHistory()
   uihomehistory->table_history->setColumnWidth(2, 80);
   uihomehistory->table_history->setColumnWidth(3, 80);
   uihomehistory->table_history->setColumnWidth(4, 80);
-//  uihomehistory->table_history->setColumnHidden(5,true);
-//  uihomehistory->table_history->setColumnHidden(6,true);
+  uihomehistory->table_history->setColumnHidden(5,true);
+  uihomehistory->table_history->setColumnHidden(6,true);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   connect(uihomehistory->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadHistory()));
   connect(uihomehistory->button_print,SIGNAL(clicked()),this,SLOT(printHistory()));
+  connect(uihomehistory->table_history,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(highlight(QModelIndex)));
+  connect(uihomehistory->button_highlight,SIGNAL(clicked()),this,SLOT(highlight()));
 }
 
 
@@ -1137,9 +1139,56 @@ void MainWindow::printHistory()
   }
 }
 
+void MainWindow::highlight(QModelIndex mi)
+{
+  int number    = uihomehistory->table_history->item(mi.row(),5)->text().toInt();
+  int joinentry = uihomehistory->table_history->item(mi.row(),6)->text().toInt();
+
+  for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
+    uihomehistory->table_history->item(i,2)->setBackgroundColor(Qt::white);
+    uihomehistory->table_history->item(i,3)->setBackgroundColor(Qt::white);
+  }
+
+  if (mi.data().toString()=="" || mi.column()>3 || mi.column()<2) {
+    return;
+  }
+
+  if (mi.column()==3) {
+    for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
+      if (uihomehistory->table_history->item(i,5)->text().toInt() == joinentry) {
+        uihomehistory->table_history->item(i,2)->setBackgroundColor(Qt::yellow);
+      }
+      else {
+        uihomehistory->table_history->item(i,2)->setBackgroundColor(Qt::white);
+      }
+      uihomehistory->table_history->item(i,3)->setBackgroundColor(Qt::white);
+    }
+    return;
+  }
+
+  if (mi.column()==2) {
+    for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
+      if (uihomehistory->table_history->item(i,6)->text().toInt() == number) {
+        uihomehistory->table_history->item(i,3)->setBackgroundColor(Qt::cyan);
+      }
+      else {
+        uihomehistory->table_history->item(i,3)->setBackgroundColor(Qt::white);
+      }
+      uihomehistory->table_history->item(i,2)->setBackgroundColor(Qt::white);
+    }
+  }
+}
+
 void MainWindow::highlight()
 {
-
+  for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
+    if (uihomehistory->table_history->item(i,2)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="0") {
+      uihomehistory->table_history->item(i,2)->setBackgroundColor(220<<16|220<<8|220);
+    }
+    if (uihomehistory->table_history->item(i,3)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="0") {
+      uihomehistory->table_history->item(i,3)->setBackgroundColor(220<<16|220<<8|220);
+    }
+  }
 }
 
 void MainWindow::openAccountDetail()

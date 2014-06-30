@@ -77,6 +77,7 @@ private slots:
 
     void loadHistory();
     void printHistory();
+    void highlight(QModelIndex);
     void highlight();
 
     void openAccountDetail();
