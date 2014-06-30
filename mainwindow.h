@@ -77,6 +77,7 @@ private slots:
 
     void loadHistory();
     void printHistory();
+    void highlight();
 
     void openAccountDetail();
     void loadAccountDetail(int);

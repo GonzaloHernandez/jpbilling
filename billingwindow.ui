@@ -33,7 +33,7 @@
      </property>
      <widget class="QWidget" name="tab_general">
       <attribute name="title">
-       <string>Cargos generales</string>
+       <string>Expensas</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
@@ -140,7 +140,7 @@
      </widget>
      <widget class="QWidget" name="tab_penalties">
       <attribute name="title">
-       <string>Generar Multas</string>
+       <string>Multas por mora</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_4">
        <item>
@@ -279,7 +279,7 @@
      </widget>
      <widget class="QWidget" name="tab_particular">
       <attribute name="title">
-       <string>Cargos particulares</string>
+       <string>Otros multas</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
