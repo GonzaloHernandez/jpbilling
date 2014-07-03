@@ -29,7 +29,8 @@ FORMS    += mainwindow.ui \
     homehistorywindow.ui \
     accountdetailwindow.ui \
     specialentry.ui \
-    descriptorsbrowser.ui
+    descriptorsbrowser.ui \
+    summarydebts.ui
 
 RESOURCES += \
     jpbilling.qrc

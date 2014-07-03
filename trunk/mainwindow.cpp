@@ -124,7 +124,7 @@ void MainWindow::openBilling()
 QWidget* MainWindow::openBillingList()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
-    if (subwindow->windowTitle() == "Facturación a registrar") {
+    if (subwindow->windowTitle() == "Facturación general") {
       subwindow->activateWindow();
       return NULL;
     }
@@ -133,7 +133,7 @@ QWidget* MainWindow::openBillingList()
   QWidget* subwindow = new QWidget;
   uibillinglist = new Ui::BillingListWindow;
   uibillinglist->setupUi(subwindow);
-  subwindow->setWindowTitle("Facturación a registrar");
+  subwindow->setWindowTitle("Facturación general");
   subwindow->setMinimumWidth(330);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
@@ -195,11 +195,11 @@ void MainWindow::openCollect()
   uicollect->table_detail->setColumnHidden(4,true);
   uicollect->table_detail->setColumnHidden(5,true);
   subwindow->show();
-  connect(uicollect->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadDebut()));
+  connect(uicollect->lineedit_home,SIGNAL(returnPressed()),this,SLOT(loadDebut()));
   connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
   connect(uicollect->table_detail,SIGNAL(cellChanged(int,int)),this,SLOT(resumeCollect(int,int)));
   connect(uicollect->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateCollect()));
-  connect(uicollect->lineedit_voucher,SIGNAL(editingFinished()),uicollect->table_detail,SLOT(setFocus()));
+  connect(uicollect->lineedit_voucher,SIGNAL(returnPressed()),uicollect->table_detail,SLOT(setFocus()));
   uicollect->dateedit_date->setDate(QDate::currentDate());
   uicollect->lineedit_home->setFocus();
 }
@@ -311,6 +311,50 @@ void MainWindow::openHomeHistory()
   connect(uihomehistory->button_highlight,SIGNAL(clicked()),this,SLOT(highlight()));
 }
 
+void MainWindow::openSummaryDebts()
+{
+  foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+    if (subwindow->windowTitle() == "Resumen de deudas") {
+      subwindow->activateWindow();
+      return;
+    }
+  }
+
+  QWidget* subwindow = new QWidget;
+  uisummarydebts= new Ui::SummaryDebtsWindow;
+  uisummarydebts->setupUi(subwindow);
+  subwindow->setWindowTitle("Resumen de deudas");
+  subwindow->setMinimumWidth(650);
+  ui->mdiArea->addSubWindow(subwindow);
+  QStringList labels;
+  labels = labels <<"Casa";
+  uisummarydebts->table_info->setHorizontalHeaderLabels(labels);
+
+  QSqlQuery query;
+  query.exec("SELECT number,name FROM accounts WHERE handler = 1320");
+  int i=1;
+  while (query.next()) {
+    QTableWidgetItem* headeritem = new QTableWidgetItem(query.value(0).toString());
+    headeritem->setToolTip(query.value(1).toString());
+    uisummarydebts->table_info->setHorizontalHeaderItem(i,headeritem);
+    i++;
+  }
+  uisummarydebts->table_info->setHorizontalHeaderItem(7,new QTableWidgetItem("Total"));
+
+  uisummarydebts->table_info->setColumnWidth(0,60);
+  uisummarydebts->table_info->setColumnWidth(1,80);
+  uisummarydebts->table_info->setColumnWidth(2,80);
+  uisummarydebts->table_info->setColumnWidth(3,80);
+  uisummarydebts->table_info->setColumnWidth(4,80);
+  uisummarydebts->table_info->setColumnWidth(5,80);
+  uisummarydebts->table_info->setColumnWidth(6,80);
+  uisummarydebts->table_info->setColumnWidth(7,80);
+  connect(uisummarydebts->button_refresh,SIGNAL(clicked()),this,SLOT(loadSummaryDebts()));
+  connect(uisummarydebts->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateSummaryDebts()));
+  loadSummaryDebts();
+  showDateSummaryDebts();
+  subwindow->show();
+}
 
 void MainWindow::loadProvidersType()
 {
@@ -355,6 +399,13 @@ void MainWindow::savePayment()
   QString   detail;
   QString   descriptor;
   int       voucher;
+
+  if (QMessageBox(QMessageBox::Information,
+                  "Preparado para guardar",
+                  "Esta seguro que desea guardar este pago?",
+                  QMessageBox::Yes|QMessageBox::No).exec() == QMessageBox::No) {
+    return;
+  }
 
   query.exec("SELECT max(number) FROM entries");
   if (query.next()) {
@@ -405,6 +456,13 @@ void MainWindow::saveProvider()
   QString name    = uipayments->lineedit_name->text();
   QString phone   = uipayments->lineedit_phone->text();
   QString address = uipayments->lineedit_address->text();
+
+  if (QMessageBox(QMessageBox::Information,
+                  "Preparado para guardar",
+                  "Esta seguro que desea guardar este proveedor?",
+                  QMessageBox::Yes|QMessageBox::No).exec() == QMessageBox::No) {
+    return;
+  }
 
   if (id == "") {
     QMessageBox::information(this,"Error!","No ha ingresado la identificación");
@@ -485,7 +543,6 @@ void MainWindow::createGeneralBilling()
     number = query.value(0).toInt()+1;
   }
 
-
   value   = uibilling->lineedit_value->text().toInt();
   if (uibilling->checkbox_voucher->isChecked()) {
     voucher = uibilling->lineedit_voucher->text().toInt();
@@ -537,12 +594,13 @@ void MainWindow::createGeneralBilling()
     uibillinglist->table_billing->setItem(i,9,new QTableWidgetItem(QString("%L1").arg(total)));
 
     for (int c=0; c<10; c++) {
-      uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      if (c!=2) {
+          uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      }
       if (c>=3) {
         uibillinglist->table_billing->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
       }
     }
-
 
     i++;
   }
@@ -626,6 +684,13 @@ void MainWindow::savePenalties()
   int     account1  = 42352035;
   QString date      = uibilling->dateedit_at->date().toString("yyyy-MM-dd");
   QString home;
+
+  if (QMessageBox(QMessageBox::Information,
+                  "Preparado para guardar",
+                  "Esta seguro que desea guardar estas multas?",
+                  QMessageBox::Yes|QMessageBox::No).exec() == QMessageBox::No) {
+    return;
+  }
 
   int     value;
   QSqlQuery query;
@@ -750,6 +815,13 @@ void MainWindow::saveGeneralBilling()
   int     value;
   int     voucher;
   QSqlQuery query;
+
+  if (QMessageBox(QMessageBox::Information,
+                  "Preparado para guardar",
+                  "Esta seguro que desea guardar esta facturación?",
+                  QMessageBox::Yes|QMessageBox::No).exec() == QMessageBox::No) {
+    return;
+  }
 
   for (int i=0; i<49; i++) {
     name      = uibillinglist->table_billing->item(i,0)->text();
@@ -969,6 +1041,13 @@ void MainWindow::saveCollect()
   QString   descriptor;
   QString   voucher;
 
+  if (QMessageBox(QMessageBox::Information,
+                  "Preparado para guardar",
+                  "Esta seguro que desea guardar este recaudo?",
+                  QMessageBox::Yes|QMessageBox::No).exec() == QMessageBox::No) {
+    return;
+  }
+
   query.exec("SELECT max(number) FROM entries");
   if (query.next()) {
     number = query.value(0).toInt()+1;
@@ -1031,11 +1110,16 @@ void MainWindow::loadHistory()
   if (query.next()) {
     uihomehistory->label_home->setText(query.value(0).toString());
     uihomehistory->label_owner->setText(query.value(1).toString());
+    uihomehistory->button_print->setEnabled(true);
+    uihomehistory->lineedit_home->selectAll();
   }
   else {
+    uihomehistory->table_history->setRowCount(0);
+    uihomehistory->button_print->setText("Imprimir");
+    uihomehistory->button_print->setEnabled(false);
+    uihomehistory->lineedit_home->selectAll();
     return;
   }
-  uihomehistory->lineedit_home->selectAll();
 
   QString id = uihomehistory->label_home->text();
   query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
@@ -1046,7 +1130,7 @@ void MainWindow::loadHistory()
                      "WHERE descriptorid='%1' AND state='1' "
                      "AND (account LIKE '1320%' OR account LIKE '2805%') "
                      "AND accounts.number=entries.account "
-                     "ORDER BY date,type,account").arg(id));
+                     "ORDER BY date,number").arg(id));
 
   uihomehistory->table_history->setRowCount(0);
 
@@ -1091,6 +1175,11 @@ void MainWindow::loadHistory()
 
     i++;
   }
+
+  int pagecount = uihomehistory->table_history->rowCount() / 44;
+  if (uihomehistory->table_history->rowCount()%44>0) pagecount ++;
+
+  uihomehistory->button_print->setText(QString("Imprimir %1 pagina%2").arg(pagecount).arg(pagecount==1?"":"s"));
 }
 
 void MainWindow::printHistory()
@@ -1103,27 +1192,46 @@ void MainWindow::printHistory()
   if (printDialog.exec() == QDialog::Accepted) {
     QPainter painter(&printer);
     QFont font = painter.font();
-
-    font.setPointSize(font.pointSize()+4);
+    font.setPointSize(font.pointSize()-2);
     painter.setFont(font);
 
-    painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
-
-    font.setPointSize(font.pointSize()-6);
-    painter.setFont(font);
+    int page = printDialog.fromPage();
+    int to = printDialog.toPage();
 
     int y = cv(22);
-    painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,"FECHA");
-    painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,"CONCEPTO");
-    painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,"DEBE");
-    painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,"HABER");
-    painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,"SALDO");
+    int p = 0;
+    int min = 0;
+    int max = uihomehistory->table_history->rowCount();
+    if (page>0) {
+      min = (page-1)*44;
+      max = max<(to*44)?max:(to*44);
+    }
+    else {
+      page=1;
+    }
+    for (int i=min; i<max; i++) {
+      if (p==44 || p==0) {
+        if (p>0) {
+          printer.newPage();
+          page++;
+        }
+        p = 0;
+        y = cv(22);
 
-    painter.drawLine(ch(9),cv(28),ch(189),cv(29));
+        font.setPointSize(font.pointSize()+6);
+        painter.setFont(font);
+        painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
+        font.setPointSize(font.pointSize()-6);
+        painter.setFont(font);
 
-    for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
-      int first = 30+i*6 ;
-      int y = cv(first);
+        painter.drawText(ch(170),cv(11),ch(15),cv(6),Qt::AlignRight,QString("Pagina %1").arg(page));
+        painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,"FECHA");
+        painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,"CONCEPTO");
+        painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,"DEBE");
+        painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,"HABER");
+        painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,"SALDO");
+      }
+      int y = cv( (30+p*5) );
       painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,0)->text());
 
       QString detail = uihomehistory->table_history->item(i,1)->text();
@@ -1135,6 +1243,7 @@ void MainWindow::printHistory()
       painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,2)->text());
       painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,3)->text());
       painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,4)->text());
+      p++;
     }
   }
 }
@@ -1226,7 +1335,7 @@ void MainWindow::loadAccountDetail(int account)
   QSqlQuery query;
   query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,descriptorid "
                      "FROM entries,accounts "
-                     "WHERE account = %1 AND accounts.number=entries.account "
+                     "WHERE account LIKE '%1%' AND accounts.number=entries.account "
                      "ORDER BY date").arg(account));
 
   uiaccountdetail->table_detail->setRowCount(0);
@@ -1256,4 +1365,75 @@ void MainWindow::loadAccountDetail(int account)
     }
     i++;
   }
+}
+
+void MainWindow::loadSummaryDebts()
+{
+  uisummarydebts->dateedit_date->setDate(QDate::currentDate());
+  uisummarydebts->table_info->setRowCount(0);
+  QSqlQuery query;
+  query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
+  int fulltotals[6];
+  for (int t=0; t<6; t++) fulltotals[t]= 0;
+  int fulltotal = 0;
+  int i;
+  for ( i=0; query.next(); i++) {
+    uisummarydebts->table_info->insertRow(uisummarydebts->table_info->rowCount());
+    uisummarydebts->table_info->setItem(i,0,new QTableWidgetItem(query.value(0).toString()));
+    uisummarydebts->table_info->item(i,0)->setToolTip(query.value(1).toString());
+
+    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
+                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
+                                  "FROM entries,accounts "
+                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
+                                  "AND entries.account=accounts.number "
+                                  "ORDER BY date").arg(query.value(0).toString());
+    int totals[6];
+    for (int t=0; t<6; t++) totals[t]= 0;
+    int total = 0;
+
+    QSqlQuery individualquery;
+    individualquery.exec(querytext);
+    while(individualquery.next()) {
+      if (!individualquery.value(6).isNull() && individualquery.value(5).toInt()<=individualquery.value(6).toInt()) continue;
+      int debut = individualquery.value(5).toInt();
+      if (!individualquery.value(6).isNull()) debut -= individualquery.value(6).toInt();
+
+      int t = (individualquery.value(1).toString().right(2).toInt()-30)/5;
+      totals[t] += debut;
+      total += debut;
+    }
+    for (int t=0; t<6; t++) {
+      uisummarydebts->table_info->setItem(i,1+t,new QTableWidgetItem(QString("%L1").arg(totals[t])));
+      fulltotals[t] += totals[t];
+    }
+    uisummarydebts->table_info->setItem(i,7,new QTableWidgetItem(QString("%L1").arg(total)));
+    fulltotal += total;
+
+    for (int c=0; c<8; c++) {
+      uisummarydebts->table_info->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+      if (c>=1) {
+        uisummarydebts->table_info->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+      }
+    }
+  }
+  uisummarydebts->table_info->insertRow(uisummarydebts->table_info->rowCount());
+  uisummarydebts->table_info->setItem(i,0,new QTableWidgetItem("Totales"));
+  for (int t=0; t<6; t++) {
+    uisummarydebts->table_info->setItem(i,1+t,new QTableWidgetItem(QString("%L1").arg(fulltotals[t])));
+  }
+  uisummarydebts->table_info->setItem(i,7,new QTableWidgetItem(QString("%L1").arg(fulltotal)));
+
+  for (int c=0; c<8; c++) {
+    uisummarydebts->table_info->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+    uisummarydebts->table_info->item(i,c)->setForeground(Qt::blue);
+    if (c>=1) {
+      uisummarydebts->table_info->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+    }
+  }
+}
+
+void MainWindow::showDateSummaryDebts()
+{
+  uisummarydebts->label_date->setText(uisummarydebts->dateedit_date->date().toString("dd-MMM-yyyy"));
 }
