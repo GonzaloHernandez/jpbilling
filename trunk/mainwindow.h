@@ -73,7 +73,7 @@ private slots:
     void loadProvidersWindow();
     void saveProvidersWindow();
 
-    void loadDebut();
+    void loadDebt();
     void saveCollect();
     void resumeCollect(int,int);
 
@@ -87,6 +87,7 @@ private slots:
 
     void loadSummaryDebts();
     void showDateSummaryDebts();
+    void printSummaryDebts();
 
 private:
     Ui::MainWindow*         ui;
