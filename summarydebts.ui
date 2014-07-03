@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HomeHistoryWindow</class>
- <widget class="QWidget" name="HomeHistoryWindow">
+ <class>SummaryDebtsWindow</class>
+ <widget class="QWidget" name="SummaryDebtsWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>560</width>
-    <height>363</height>
+    <width>500</width>
+    <height>330</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label_home0">
+      <widget class="QLabel" name="label_date0">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -37,40 +37,25 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Casa</string>
+        <string>Fecha de corte</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="lineedit_home">
+      <widget class="QDateEdit" name="dateedit_date">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>16777215</height>
-        </size>
+       <property name="displayFormat">
+        <string>dd-MM-yy</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_home">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>80</width>
-         <height>16777215</height>
-        </size>
-       </property>
+      <widget class="QLabel" name="label_date">
        <property name="frameShape">
         <enum>QFrame::Box</enum>
        </property>
@@ -83,44 +68,29 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_owner">
-       <property name="frameShape">
-        <enum>QFrame::Box</enum>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Raised</enum>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="button_highlight">
+      <widget class="QPushButton" name="button_refresh">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
-       <property name="maximumSize">
-        <size>
-         <width>30</width>
-         <height>16777215</height>
-        </size>
-       </property>
        <property name="text">
-        <string>?</string>
+        <string>Refrescar</string>
        </property>
       </widget>
      </item>
     </layout>
    </item>
    <item>
-    <widget class="QTableWidget" name="table_history">
+    <widget class="QTableWidget" name="table_info">
      <property name="columnCount">
-      <number>7</number>
+      <number>8</number>
      </property>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <column/>
      <column/>
      <column/>
      <column/>
@@ -129,20 +99,6 @@
      <column/>
      <column/>
     </widget>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QPushButton" name="button_print">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Imprimir</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
   </layout>
  </widget>

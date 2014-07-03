@@ -64,6 +64,7 @@
      <string>Reportes</string>
     </property>
     <addaction name="action_history_home"/>
+    <addaction name="action_summarydebts"/>
    </widget>
    <addaction name="menu_system"/>
    <addaction name="menu_activities"/>
@@ -158,6 +159,11 @@
    </property>
    <property name="text">
     <string>Salir</string>
+   </property>
+  </action>
+  <action name="action_summarydebts">
+   <property name="text">
+    <string>Resumen de deudas</string>
    </property>
   </action>
  </widget>
@@ -294,6 +300,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_summarydebts</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openSummaryDebts()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -303,5 +325,6 @@
   <slot>openHomes()</slot>
   <slot>openProviders()</slot>
   <slot>openHomeHistory()</slot>
+  <slot>openSummaryDebts()</slot>
  </slots>
 </ui>

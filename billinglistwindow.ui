@@ -99,13 +99,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QCheckBox" name="checkbox_print">
-     <property name="text">
-      <string>Imprimir en Comprobantes</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QPushButton" name="button_save">
      <property name="text">
       <string>Procesar</string>
