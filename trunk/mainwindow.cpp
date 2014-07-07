@@ -352,6 +352,7 @@ void MainWindow::openSummaryDebts()
   connect(uisummarydebts->button_refresh,SIGNAL(clicked()),this,SLOT(loadSummaryDebts()));
   connect(uisummarydebts->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDateSummaryDebts()));
   connect(uisummarydebts->button_print,SIGNAL(clicked()),this,SLOT(printSummaryDebts()));
+  uisummarydebts->dateedit_date->setDate(QDate::currentDate());
   loadSummaryDebts();
   showDateSummaryDebts();
   subwindow->show();
@@ -1370,7 +1371,6 @@ void MainWindow::loadAccountDetail(int account)
 
 void MainWindow::loadSummaryDebts()
 {
-  uisummarydebts->dateedit_date->setDate(QDate::currentDate());
   uisummarydebts->table_info->setRowCount(0);
   QSqlQuery query;
   query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
@@ -1384,11 +1384,12 @@ void MainWindow::loadSummaryDebts()
     uisummarydebts->table_info->item(i,0)->setToolTip(query.value(1).toString());
 
     QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
+                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n AND date <= '%2') "
                                   "FROM entries,accounts "
                                   "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
                                   "AND entries.account=accounts.number "
-                                  "ORDER BY date").arg(query.value(0).toString());
+                                  "AND date <= '%2'"
+                                  "ORDER BY date").arg(query.value(0).toString()).arg(uisummarydebts->dateedit_date->date().toString("yyyy-MM-dd"));
     int totals[6];
     for (int t=0; t<6; t++) totals[t]= 0;
     int total = 0;
