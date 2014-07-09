@@ -35,7 +35,7 @@ void MainWindow::connectDB()
   db = QSqlDatabase::addDatabase("QMYSQL");
   db.setHostName("localhost");
   db.setDatabaseName("accounting");
-  db.setUserName("accountant");
+  db.setUserName("root");
   db.setPassword("123");
   dbconnected = db.open();
 }
@@ -217,7 +217,8 @@ void MainWindow::openPUC()
   uipuc = new Ui::PUCWindow;
   uipuc->setupUi(subwindow);
   subwindow->setWindowTitle("Plan Unico de Cuentas");
-  subwindow->setMinimumWidth(330);
+  subwindow->setMinimumWidth(450);
+  subwindow->setMinimumHeight(400);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   QStringList labels("Cuentas");
@@ -549,7 +550,6 @@ void MainWindow::createGeneralBilling()
   if (uibilling->checkbox_voucher->isChecked()) {
     voucher = uibilling->lineedit_voucher->text().toInt();
   }
-//  handler = uibilling->combobox_type->currentData().toString();
   handler = uibilling->combobox_type->currentText().split(" ").at(0);
 
   query.exec(QString("SELECT id,field1 FROM descriptors WHERE type=1"));
@@ -1025,6 +1025,16 @@ void MainWindow::loadDebt()
     i++;
     total += debt; //query.value(5).toInt();
   }
+  uicollect->table_detail->insertRow(uicollect->table_detail->rowCount());
+  uicollect->table_detail->setItem(i,0,new QTableWidgetItem("Anticipo"));
+  uicollect->table_detail->setItem(i,1,new QTableWidgetItem("?"));
+  uicollect->table_detail->setItem(i,2,new QTableWidgetItem("0"));
+  uicollect->table_detail->setItem(i,3,new QTableWidgetItem("0"));
+  uicollect->table_detail->setItem(i,5,new QTableWidgetItem("280595"));
+
+  uicollect->table_detail->item(i,0)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+  uicollect->table_detail->item(i,2)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+
   uicollect->label_debt->setText(QString("%L1").arg(total));
   uicollect->label_debt->setToolTip(QString("%1").arg(total));
   uicollect->label_balance->setText(QString("%L1").arg(total));
@@ -1066,7 +1076,7 @@ void MainWindow::saveCollect()
   query.exec(querytext0);
 
   int record = 2;
-  for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
+  for (int i=0; i<uicollect->table_detail->rowCount()-1; i++) {
     value       = uicollect->table_detail->item(i,3)->text().toInt();
     if (value==0) continue;
     account1    = uicollect->table_detail->item(i,5)->text().toInt();
@@ -1079,6 +1089,16 @@ void MainWindow::saveCollect()
     QString querytext2 = QString("UPDATE entries SET joinentry=%1 WHERE number=%2 AND account=%3").arg(number).arg(joinentry).arg(account1);
     query.exec(querytext2);
     record ++;
+  }
+
+  int i = uicollect->table_detail->rowCount()-1;
+  if (uicollect->table_detail->item(i,3)->text()!="0") {
+      value       = uicollect->table_detail->item(i,3)->text().toInt();
+      account1    = uicollect->table_detail->item(i,5)->text().toInt();
+      detail      = uicollect->table_detail->item(i,1)->text();
+
+      QString querytext1 = QString("INSERT INTO entries VALUES(%1,%8,%2,'%3',%4,%5,'%6','%7',null,%9,'1')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(record).arg(voucher);
+      query.exec(querytext1);
   }
 
   QMessageBox::information(this,"Transacción procesada",QString("Asiento registrado [Número: %1]").arg(number));
@@ -1332,10 +1352,15 @@ void MainWindow::openAccountDetail()
   loadAccountDetail(account);
 }
 
+/*
+ * 1,5,6 DEBIT
+ * 2,3,4 CREDIT
+ * */
+
 void MainWindow::loadAccountDetail(int account)
 {
   QSqlQuery query;
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,descriptorid "
+  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,descriptorid,voucher "
                      "FROM entries,accounts "
                      "WHERE account LIKE '%1%' AND accounts.number=entries.account "
                      "ORDER BY date").arg(account));
@@ -1344,6 +1369,12 @@ void MainWindow::loadAccountDetail(int account)
 
   int i=0;
   int balance = 0;
+  int digit = QString("%1").arg(account).left(1).toInt();
+  int sign = 1;
+  if (digit==2 || digit==3 || digit ==4) {
+      sign = -1;
+  }
+
   while (query.next()) {
     uiaccountdetail->table_detail->insertRow(uiaccountdetail->table_detail->rowCount());
     QString date        = query.value(0).toDate().toString("dd-MMM-yyyy");
@@ -1351,16 +1382,20 @@ void MainWindow::loadAccountDetail(int account)
     int     value       = query.value(3).toInt();
     QString detail      = query.value(4).toString();
     QString descriptor  = query.value(7).toString();
+    int     voucher     = query.value(8).toInt();
+
     type==DEBIT?balance+=value:balance-=value;
 
     uiaccountdetail->table_detail->setItem(i,0,new QTableWidgetItem(date));
     uiaccountdetail->table_detail->setItem(i,1,new QTableWidgetItem(descriptor+": "+detail));
     uiaccountdetail->table_detail->setItem(i,2+type,new QTableWidgetItem(QString("%L1").arg(value)));
     uiaccountdetail->table_detail->setItem(i,3-type,new QTableWidgetItem(""));
-    uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%L1").arg(balance)));
+    uiaccountdetail->table_detail->setItem(i,4,new QTableWidgetItem(QString("%L1").arg(balance*sign)));
     uiaccountdetail->table_detail->item(i,2)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uiaccountdetail->table_detail->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uiaccountdetail->table_detail->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
+
+    uiaccountdetail->table_detail->item(i,1)->setToolTip(QString("Comprobante. %1").arg(voucher));
 
     for (int c=0; c<5; c++) {
       uiaccountdetail->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
