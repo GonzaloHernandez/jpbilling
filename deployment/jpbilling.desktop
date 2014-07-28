@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=JPBilling
+Name[es]=JPBilling
+GenericName=JPBilling
+GenericName[es]=JPBilling
+Comment=JPBilling
+Comment[es]=JPBilling
+Exec=jpbilling
+Icon=jpbilling.png
+Terminal=false
+Categories=Office;Finance;
+MimeType=
+StartupNotify=true
