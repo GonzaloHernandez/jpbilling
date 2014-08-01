@@ -150,6 +150,7 @@ QWidget* MainWindow::openBillingList()
     i++;
   }
   uibillinglist->table_billing->setHorizontalHeaderItem(9,new QTableWidgetItem("Total"));
+  uibillinglist->table_billing->setHorizontalHeaderItem(10,new QTableWidgetItem("Anticipo"));
 
   uibillinglist->table_billing->setColumnWidth(0,60);
   uibillinglist->table_billing->setColumnWidth(1,80);
@@ -194,6 +195,7 @@ void MainWindow::openCollect()
   uicollect->table_detail->setColumnWidth(3, 90);
   uicollect->table_detail->setColumnHidden(4,true);
   uicollect->table_detail->setColumnHidden(5,true);
+  uicollect->table_detail->setColumnHidden(6,true);
   subwindow->show();
   connect(uicollect->lineedit_home,SIGNAL(returnPressed()),this,SLOT(loadDebt()));
   connect(uicollect->button_save,SIGNAL(clicked()),this,SLOT(saveCollect()));
@@ -378,7 +380,7 @@ void MainWindow::loadProviders()
   query.exec("SELECT id,field1 FROM descriptors WHERE type=2 ORDER BY field1");
   while (query.next())
   {
-    uipayments->combobox_provider->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
+    uipayments->combobox_provider->addItem(query.value(1).toString()+"  ["+query.value(0).toString()+"]",query.value(0).toString());
   }
 }
 
@@ -420,7 +422,7 @@ void MainWindow::savePayment()
   detail      = uipayments->lineedit_detail->text();
   date        = uipayments->dateedit_date->date().toString("yyyy-MM-dd");
   value       = uipayments->lineedit_value->text().toInt();
-  descriptor  = uipayments->combobox_provider->currentText().split(" ").at(0);
+  descriptor  = uipayments->combobox_provider->currentData().toString();
   voucher     = uipayments->lineedit_voucher->text().toInt();
 
   if (uipayments->combobox_type->currentText()=="") {
@@ -566,27 +568,67 @@ void MainWindow::createGeneralBilling()
     uibillinglist->table_billing->item(i,0)->setToolTip(query.value(1).toString());
     uibillinglist->table_billing->setItem(i,1,new QTableWidgetItem(QString("%L1").arg(value)));
     uibillinglist->table_billing->setItem(i,2,new QTableWidgetItem(QString("%1").arg(voucher)));
+    uibillinglist->table_billing->setItem(i,10,new QTableWidgetItem("0"));
+    uibillinglist->table_billing->setItem(i,11,new QTableWidgetItem("0"));
 
     if (uibilling->checkbox_voucher->isChecked()) { voucher++; }
 
-    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
-                                  "FROM entries,accounts "
-                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
-                                  "AND entries.account=accounts.number "
+    QString   querytext1= QString("SELECT e.number num,record rec,account,date,name,detail,value val, "
+                                  "  (SELECT sum(value) "
+                                  "   FROM entries e,relations r "
+                                  "   WHERE r.compensation_number = e.number AND r.compensation_record = e.record "
+                                  "   AND source_number=num AND source_record=rec) "
+                                  "FROM entries e, accounts a "
+                                  "WHERE e.account = a.number "
+                                  "AND descriptorid = '%1' AND type=1 AND account like '28%' "
                                   "ORDER BY date").arg(query.value(0).toString());
-    int totals[6];
-    for (int t=0; t<6; t++) totals[t]= 0;
-    int total = value;
 
     QSqlQuery individualquery;
+    individualquery.exec(querytext1);
+
+    int newvalue = value;
+    while(individualquery.next()) {
+      if (individualquery.value(6).toInt()-individualquery.value(7).toInt()>0) {
+        int balance = individualquery.value(6).toInt()-individualquery.value(7).toInt();
+        int rebate = 0;
+        newvalue = value - balance;
+        if (newvalue <= 0 ) {
+          newvalue = 0;
+          rebate = value;
+        }
+        else {
+          rebate = value-newvalue;
+        }
+        uibillinglist->table_billing->item(i,1)->setText(QString("%L1").arg(newvalue));
+        uibillinglist->table_billing->item(i,10)->setText(QString("%L1").arg(balance));
+        uibillinglist->table_billing->item(i,11)->setText(QString("%L1").arg(rebate));
+        QString key = QString("%1 %2").arg(individualquery.value(0).toInt()).arg(individualquery.value(1).toInt());
+        uibillinglist->table_billing->setItem(i,12,new QTableWidgetItem(key));
+        break;
+      }
+    }
+
+    QString   querytext = QString("SELECT e.number num,record rec,account,date,name,detail,value val, "
+                                  "   (SELECT sum(value) "
+                                  "   FROM entries e,relations r "
+                                  "   WHERE r.compensation_number = e.number AND r.compensation_record = e.record "
+                                  "   AND source_number=num AND source_record=rec) "
+                                  "FROM entries e, accounts a "
+                                  "WHERE e.account = a.number "
+                                  "AND descriptorid = '%1' AND type=0 AND account like '13%' "
+                                  "ORDER BY date").arg(query.value(0).toString());
+
+    int totals[6];
+    for (int t=0; t<6; t++) totals[t]= 0;
+    int total = newvalue;
+
     individualquery.exec(querytext);
     while(individualquery.next()) {
-      if (!individualquery.value(6).isNull() && individualquery.value(5).toInt()<=individualquery.value(6).toInt()) continue;
-      int debt = individualquery.value(5).toInt();
-      if (!individualquery.value(6).isNull()) debt -= individualquery.value(6).toInt();
+      if (!individualquery.value(7).isNull() && individualquery.value(6).toInt()<=individualquery.value(7).toInt()) continue;
+      int debt = individualquery.value(6).toInt();
+      if (!individualquery.value(7).isNull()) debt -= individualquery.value(7).toInt();
 
-      int t = (individualquery.value(1).toString().right(2).toInt()-30)/5;
+      int t = (individualquery.value(2).toString().right(2).toInt()-30)/5;
       totals[t] += debt;
       total += debt;
     }
@@ -595,7 +637,7 @@ void MainWindow::createGeneralBilling()
     }
     uibillinglist->table_billing->setItem(i,9,new QTableWidgetItem(QString("%L1").arg(total)));
 
-    for (int c=0; c<10; c++) {
+    for (int c=0; c<11; c++) {
       if (c!=2) {
           uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
       }
@@ -758,10 +800,10 @@ void MainWindow::printBilling(QModelIndex mi)
     if (printDialog.exec() == QDialog::Accepted) {
       QPainter painter(&printer);
 
-      double y = 34.4;
+      double y = 33.0;
 
-      painter.drawText(ch( 20),cv(34.4),ch(100),cv(5),Qt::AlignLeft,owner); y += 4.9;
-      painter.drawText(ch( 20),cv(39.3),ch(100),cv(5),Qt::AlignLeft,home);  y += 9.7;
+      painter.drawText(ch( 20),cv(y),ch(100),cv(5),Qt::AlignLeft,owner); y += 4.9;
+      painter.drawText(ch( 20),cv(y),ch(100),cv(5),Qt::AlignLeft,home);  y += 9.7;
 
       painter.drawText(ch( 70),cv(y),ch( 80),cv(4),Qt::AlignLeft,QString("Expensa ordinaria %1").arg(uibillinglist->label_detail->text()));
       painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,current); y += 4.3;
@@ -795,13 +837,13 @@ void MainWindow::printBilling(QModelIndex mi)
       painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,t);
 
       y += 4.3;
-      y += 4.3;
+      y += 4.8;
 
       font.setBold(false);
       font.setPointSize(font.pointSize()-2);
       painter.setFont(font);
 
-      painter.drawText(ch( 10),cv(y),ch(90),cv(4),Qt::AlignLeft,QString("Después del 10 de Julio, cancelar $5.000 adicionales"));
+      painter.drawText(ch( 10),cv(y),ch(90),cv(4),Qt::AlignLeft,QString("Después del 10 de Agosto, cancelar $5.000 adicionales"));
     }
   }
 }
@@ -828,6 +870,7 @@ void MainWindow::saveGeneralBilling()
   for (int i=0; i<49; i++) {
     name      = uibillinglist->table_billing->item(i,0)->text();
     value     = uibillinglist->table_billing->item(i,1)->text().remove(QRegExp("[.,]")).toInt();
+    value    += uibillinglist->table_billing->item(i,11)->text().remove(QRegExp("[.,]")).toInt();
     voucher   = uibillinglist->table_billing->item(i,2)->text().toInt();
     detail    = uibillinglist->label_detail->text();
 
@@ -838,6 +881,27 @@ void MainWindow::saveGeneralBilling()
     query.exec(querytext1);
 
     number++;
+
+    int rebate  = uibillinglist->table_billing->item(i,11)->text().remove(QRegExp("[.,]")).toInt();
+    if (rebate > 0) {
+      int numberentry = uibillinglist->table_billing->item(i,12)->text().split(" ").at(0).toInt();
+      int recordentry = uibillinglist->table_billing->item(i,12)->text().split(" ").at(1).toInt();
+
+      querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(280595).arg(date).arg(DEBIT).arg(rebate).arg(detail).arg(name);
+      query.exec(querytext0);
+
+      querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(account0).arg(date).arg(CREDIT).arg(rebate).arg(detail).arg(name);
+      query.exec(querytext1);
+
+      querytext0 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(numberentry).arg(recordentry).arg(number).arg(1);
+      query.exec(querytext0);
+
+      querytext1 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(number-1).arg(1).arg(numberentry).arg(2);
+      query.exec(querytext1);
+    }
+
+    number++;
+
   }
   uibillinglist->button_save->setEnabled(false);
   QMessageBox::information(this,"Registros guardados","49 asientos contables procesados");
@@ -995,35 +1059,40 @@ void MainWindow::loadDebt()
 
   QString id = uicollect->label_home->text();
 
-  QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
-                                "FROM entries,accounts "
-                                "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
-                                "AND entries.account=accounts.number "
-                                "ORDER BY date").arg(id);
+  QString   querytext = QString("SELECT e.number num,record rec,account,date,name,detail,value, "
+                                "   (SELECT sum(value) "
+                                "   FROM entries e, relations r "
+                                "   WHERE e.number = r.compensation_number AND e.record = r.compensation_record "
+                                "   AND r.source_number=num AND r.source_record=rec) com "
+                                "FROM entries e, accounts a "
+                                "WHERE e.account = a.number "
+                                "AND account LIKE '1320%' AND descriptorid='%1' AND type=0 "
+                                "ORDER BY date;).arg(id) ").arg(id);
+
   query.exec(querytext);
   int i=0,total=0;
   while (query.next()) {
-    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(6).toInt()) continue;
+    if (!query.value(7).isNull() && query.value(6).toInt()<=query.value(7).toInt()) continue;
     uicollect->table_detail->insertRow(uicollect->table_detail->rowCount());
-    uicollect->table_detail->setItem(i,0,new QTableWidgetItem(query.value(3).toString()));
-    uicollect->table_detail->setItem(i,1,new QTableWidgetItem(query.value(4).toString()));
+    uicollect->table_detail->setItem(i,0,new QTableWidgetItem(query.value(4).toString()));
+    uicollect->table_detail->setItem(i,1,new QTableWidgetItem(query.value(5).toString()));
 
-    int debt = query.value(5).toInt();
-    if (!query.value(6).isNull()) debt -= query.value(6).toInt();
+    int debt = query.value(6).toInt();
+    if (!query.value(7).isNull()) debt -= query.value(7).toInt();
 
     uicollect->table_detail->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(debt)));
     uicollect->table_detail->setItem(i,3,new QTableWidgetItem("0"));
     uicollect->table_detail->setItem(i,4,new QTableWidgetItem(query.value(0).toString()));
-    uicollect->table_detail->setItem(i,5,new QTableWidgetItem(query.value(1).toString()));
+    uicollect->table_detail->setItem(i,5,new QTableWidgetItem(query.value(2).toString()));
+    uicollect->table_detail->setItem(i,6,new QTableWidgetItem(query.value(1).toString()));
     for (int c=0; c<3; c++) {
       uicollect->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-      if (query.value(1).toInt()==132030) {
+      if (query.value(2).toInt()==132030) {
         uicollect->table_detail->item(i,c)->setForeground(Qt::blue);
       }
     }
     i++;
-    total += debt; //query.value(5).toInt();
+    total += debt; //query.value(6).toInt();
   }
   uicollect->table_detail->insertRow(uicollect->table_detail->rowCount());
   uicollect->table_detail->setItem(i,0,new QTableWidgetItem("Anticipo"));
@@ -1048,7 +1117,8 @@ void MainWindow::saveCollect()
   int       account0,account1;
   QString   date;
   int       value;
-  int       joinentry;
+  int       joinentrynumber;
+  int       joinentryrecord;
   QString   detail;
   QString   descriptor;
   QString   voucher;
@@ -1080,13 +1150,14 @@ void MainWindow::saveCollect()
     value       = uicollect->table_detail->item(i,3)->text().toInt();
     if (value==0) continue;
     account1    = uicollect->table_detail->item(i,5)->text().toInt();
-    joinentry   = uicollect->table_detail->item(i,4)->text().toInt();
+    joinentrynumber = uicollect->table_detail->item(i,4)->text().toInt();
+    joinentryrecord = uicollect->table_detail->item(i,6)->text().toInt();
     detail      = uicollect->table_detail->item(i,1)->text();
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%9,%2,'%3',%4,%5,'%6','%7',%8,%10,'1')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentry).arg(record).arg(voucher);
+    QString querytext1 = QString("INSERT INTO entries VALUES(%1,%9,%2,'%3',%4,%5,'%6','%7',%8,%10,'1')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(descriptor).arg(joinentrynumber).arg(record).arg(voucher);
     query.exec(querytext1);
 
-    QString querytext2 = QString("UPDATE entries SET joinentry=%1 WHERE number=%2 AND account=%3").arg(number).arg(joinentry).arg(account1);
+    QString querytext2 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(joinentrynumber).arg(joinentryrecord).arg(number).arg(record);
     query.exec(querytext2);
     record ++;
   }
@@ -1418,13 +1489,26 @@ void MainWindow::loadSummaryDebts()
     uisummarydebts->table_info->setItem(i,0,new QTableWidgetItem(query.value(0).toString()));
     uisummarydebts->table_info->item(i,0)->setToolTip(query.value(1).toString());
 
-    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n AND date <= '%2') "
-                                  "FROM entries,accounts "
-                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
-                                  "AND entries.account=accounts.number "
+
+//    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
+//                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n AND date <= '%2') "
+//                                  "FROM entries,accounts "
+//                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
+//                                  "AND entries.account=accounts.number "
+//                                  "AND date <= '%2'"
+//                                  "ORDER BY date").arg(query.value(0).toString()).arg(uisummarydebts->dateedit_date->date().toString("yyyy-MM-dd"));
+
+    QString   querytext = QString("SELECT e.number num,record rec,account,date,name,detail,value val, "
+                                  "  (SELECT sum(value) "
+                                  "   FROM entries e,relations r "
+                                  "   WHERE r.compensation_number = e.number AND r.compensation_record = e.record "
+                                  "   AND source_number=num AND source_record=rec) "
+                                  "FROM entries e, accounts a "
+                                  "WHERE e.account = a.number "
+                                  "AND descriptorid = '%1' AND type=0 AND account like '1320%' "
                                   "AND date <= '%2'"
                                   "ORDER BY date").arg(query.value(0).toString()).arg(uisummarydebts->dateedit_date->date().toString("yyyy-MM-dd"));
+
     int totals[6];
     for (int t=0; t<6; t++) totals[t]= 0;
     int total = 0;
@@ -1432,11 +1516,11 @@ void MainWindow::loadSummaryDebts()
     QSqlQuery individualquery;
     individualquery.exec(querytext);
     while(individualquery.next()) {
-      if (!individualquery.value(6).isNull() && individualquery.value(5).toInt()<=individualquery.value(6).toInt()) continue;
-      int debt = individualquery.value(5).toInt();
-      if (!individualquery.value(6).isNull()) debt -= individualquery.value(6).toInt();
+      if (!individualquery.value(7).isNull() && individualquery.value(6).toInt()<=individualquery.value(7).toInt()) continue;
+      int debt = individualquery.value(6).toInt();
+      if (!individualquery.value(7).isNull()) debt -= individualquery.value(7).toInt();
 
-      int t = (individualquery.value(1).toString().right(2).toInt()-30)/5;
+      int t = (individualquery.value(2).toString().right(2).toInt()-30)/5;
       totals[t] += debt;
       total += debt;
     }

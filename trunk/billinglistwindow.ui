@@ -32,7 +32,7 @@
       <number>49</number>
      </property>
      <property name="columnCount">
-      <number>10</number>
+      <number>13</number>
      </property>
      <attribute name="verticalHeaderVisible">
       <bool>false</bool>
@@ -86,6 +86,9 @@
      <row/>
      <row/>
      <row/>
+     <column/>
+     <column/>
+     <column/>
      <column/>
      <column/>
      <column/>
