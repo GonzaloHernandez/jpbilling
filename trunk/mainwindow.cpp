@@ -304,8 +304,8 @@ void MainWindow::openHomeHistory()
   uihomehistory->table_history->setColumnWidth(2, 80);
   uihomehistory->table_history->setColumnWidth(3, 80);
   uihomehistory->table_history->setColumnWidth(4, 80);
-  uihomehistory->table_history->setColumnHidden(5,true);
-  uihomehistory->table_history->setColumnHidden(6,true);
+//  uihomehistory->table_history->setColumnHidden(5,true);
+//  uihomehistory->table_history->setColumnHidden(6,true);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   connect(uihomehistory->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadHistory()));
@@ -1218,12 +1218,15 @@ void MainWindow::loadHistory()
   query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
   query.next();
   uihomehistory->label_owner->setText(query.value(0).toString());
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,voucher,account "
-                     "FROM entries,accounts "
+  query.exec(QString("SELECT date,name,type+0,value,detail,e.number num,e.record rec,voucher,account,concat(e.number,record), "
+                     "   (SELECT concat(source_number,source_record) "
+                     "   FROM relations "
+                     "   WHERE compensation_number=num AND compensation_record=rec) "
+                     "FROM entries e,accounts a "
                      "WHERE descriptorid='%1' AND state='1' "
                      "AND (account LIKE '1320%' OR account LIKE '2805%') "
-                     "AND accounts.number=entries.account "
-                     "ORDER BY date,number").arg(id));
+                     "AND a.number=e.account "
+                     "ORDER BY date,e.number").arg(id));
 
   uihomehistory->table_history->setRowCount(0);
 
@@ -1256,8 +1259,8 @@ void MainWindow::loadHistory()
     uihomehistory->table_history->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uihomehistory->table_history->item(i,1)->setToolTip(QString("Comprobante %1").arg(query.value(7).toString()));
-    uihomehistory->table_history->setItem(i,5,new QTableWidgetItem(query.value(5).toString()));
-    uihomehistory->table_history->setItem(i,6,new QTableWidgetItem(query.value(6).toString()));
+    uihomehistory->table_history->setItem(i,5,new QTableWidgetItem(query.value(9).toString()));
+    uihomehistory->table_history->setItem(i,6,new QTableWidgetItem(query.value(10).toString()));
 
     for (int c=0; c<5; c++) {
       uihomehistory->table_history->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
@@ -1384,10 +1387,10 @@ void MainWindow::highlight(QModelIndex mi)
 void MainWindow::highlight()
 {
   for (int i=0; i<uihomehistory->table_history->rowCount(); i++) {
-    if (uihomehistory->table_history->item(i,2)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="0") {
+    if (uihomehistory->table_history->item(i,2)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="") {
       uihomehistory->table_history->item(i,2)->setBackgroundColor(220<<16|220<<8|220);
     }
-    if (uihomehistory->table_history->item(i,3)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="0") {
+    if (uihomehistory->table_history->item(i,3)->text()!="" && uihomehistory->table_history->item(i,6)->text()!="") {
       uihomehistory->table_history->item(i,3)->setBackgroundColor(220<<16|220<<8|220);
     }
   }
