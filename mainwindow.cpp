@@ -361,6 +361,36 @@ void MainWindow::openSummaryDebts()
   subwindow->show();
 }
 
+void MainWindow::openSummaryCollect()
+{
+    foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+      if (subwindow->windowTitle() == "Resumen de recaudo") {
+        subwindow->activateWindow();
+        return;
+      }
+    }
+
+    QWidget* subwindow = new QWidget;
+    uisummarycollect= new Ui::SummaryCollectWindow;
+    uisummarycollect->setupUi(subwindow);
+    subwindow->setWindowTitle("Resumen de recaudo");
+    subwindow->setMinimumWidth(300);
+    subwindow->setMinimumHeight(400);
+    ui->mdiArea->addSubWindow(subwindow);
+    QStringList labels;
+    labels = labels <<"Año"<<"Mes"<<"Valor";
+    uisummarycollect->table_info->setHorizontalHeaderLabels(labels);
+
+    uisummarycollect->table_info->setColumnWidth(0,60);
+    uisummarycollect->table_info->setColumnWidth(1,90);
+    uisummarycollect->table_info->setColumnWidth(2,90);
+
+    connect(uisummarycollect->button_refresh,SIGNAL(clicked()),this,SLOT(loadSummaryCollect()));
+
+    loadSummaryCollect();
+    subwindow->show();
+}
+
 void MainWindow::loadProvidersType()
 {
   uipayments->combobox_type->addItem("");
@@ -1606,4 +1636,23 @@ void MainWindow::printSummaryDebts()
       painter.drawText(ch((c*22)),cv( (25+i*(4.5)) ),ch(22),cv(4.5),Qt::AlignRight,uisummarydebts->table_info->item(i,c)->text());
     }
   }
+}
+
+void MainWindow::loadSummaryCollect()
+{
+    uisummarycollect->table_info->setRowCount(0);
+    QSqlQuery query;
+    query.exec(QString("SELECT year(date) y,month(date) m,sum(value) v "
+                       "FROM entries "
+                       "WHERE type = 0 AND account LIKE '11%' "
+                       "GROUP BY y,m "
+                       "ORDER BY y,m; "));
+    QString months[] = {"Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
+
+    for (int i=0; query.next(); i++) {
+        uisummarycollect->table_info->insertRow(uisummarycollect->table_info->rowCount());
+        uisummarycollect->table_info->setItem(i,0,new QTableWidgetItem(QString("%1").arg(query.value(0).toInt())));
+        uisummarycollect->table_info->setItem(i,1,new QTableWidgetItem(months[query.value(1).toInt()-1]));
+        uisummarycollect->table_info->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(query.value(2).toInt())));
+    }
 }
