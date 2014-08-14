@@ -14,6 +14,7 @@
 #include <ui_homehistorywindow.h>
 #include <ui_accountdetailwindow.h>
 #include <ui_summarydebts.h>
+#include <ui_summarycollect.h>
 
 #define DEBIT 0
 #define CREDIT 1
@@ -42,6 +43,7 @@ private slots:
     void openProviders();
     void openHomeHistory();
     void openSummaryDebts();
+    void openSummaryCollect();
 
     void loadProvidersType();
     void loadProviders();
@@ -89,6 +91,8 @@ private slots:
     void showDateSummaryDebts();
     void printSummaryDebts();
 
+    void loadSummaryCollect();
+
 private:
     Ui::MainWindow*         ui;
     Ui::PaymentsWindow*     uipayments;
@@ -101,7 +105,7 @@ private:
     Ui::HomeHistoryWindow*  uihomehistory;
     Ui::AccountDetail*      uiaccountdetail;
     Ui::SummaryDebtsWindow* uisummarydebts;
-
+    Ui::SummaryCollectWindow*   uisummarycollect;
 
     bool                dbconnected;
     QSqlDatabase        db;
