@@ -48,6 +48,30 @@
            </property>
           </widget>
          </item>
+         <item row="0" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QDateEdit" name="dateedit_date">
+             <property name="displayFormat">
+              <string>dd-MM-yy</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="label_date">
+             <property name="frameShape">
+              <enum>QFrame::Box</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_type">
            <property name="text">
@@ -98,30 +122,6 @@
             <widget class="QCheckBox" name="checkbox_voucher">
              <property name="text">
               <string>Usar</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item row="0" column="1">
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QDateEdit" name="dateedit_date">
-             <property name="displayFormat">
-              <string>dd-MM-yy</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QLabel" name="label_date">
-             <property name="frameShape">
-              <enum>QFrame::Box</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string/>
              </property>
             </widget>
            </item>
