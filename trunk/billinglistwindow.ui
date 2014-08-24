@@ -102,11 +102,14 @@
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="lineedit_comment">
+    <widget class="QLineEdit" name="lineedit_comment1">
      <property name="text">
       <string>Después del 10 de Agosto, cancelar $5.000 adicionales</string>
      </property>
     </widget>
+   </item>
+   <item>
+    <widget class="QLineEdit" name="lineedit_comment2"/>
    </item>
    <item>
     <widget class="QPushButton" name="button_save">
