@@ -873,7 +873,7 @@ void MainWindow::printBilling(QModelIndex mi)
       font.setPointSize(font.pointSize()-2);
       painter.setFont(font);
 
-      painter.drawText(ch( 10),cv(y),ch(90),cv(4),Qt::AlignLeft,QString("Después del 10 de Agosto, cancelar $5.000 adicionales"));
+      painter.drawText(ch( 10),cv(y),ch(90),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment->text()));
     }
   }
 }
