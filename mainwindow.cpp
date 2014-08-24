@@ -678,6 +678,13 @@ void MainWindow::createGeneralBilling()
 
     i++;
   }
+  QString comment1 = QString("Fecha de expedición %1.")
+          .arg(uibilling->dateedit_date->date().toString("dd MM yy"));
+
+  QString comment2 = QString("Pasados 10 días, debe cancelar $5.000 por cada mes de incumplimiento.");
+
+  uibillinglist->lineedit_comment1->setText( comment1 );
+  uibillinglist->lineedit_comment2->setText( comment2 );
   list->show();
 }
 
@@ -873,7 +880,9 @@ void MainWindow::printBilling(QModelIndex mi)
       font.setPointSize(font.pointSize()-2);
       painter.setFont(font);
 
-      painter.drawText(ch( 10),cv(y),ch(90),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment->text()));
+      painter.drawText(ch( 10),cv(y),ch(120),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment1->text()));
+      y += 4.3;
+      painter.drawText(ch( 10),cv(y),ch(120),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment2->text()));
     }
   }
 }
