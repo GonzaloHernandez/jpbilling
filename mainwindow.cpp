@@ -723,31 +723,34 @@ void MainWindow::loadPenalties()
   uibilling->table_penalties->setRowCount(0);
 
   QSqlQuery query;
-  QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value,descriptorid,"
-                                "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n) "
-                                "FROM entries,accounts "
-                                "WHERE account = 132030 AND type=0 AND date >= '%1' "
-                                "AND entries.account=accounts.number "
+  QString   querytext = QString("SELECT e.number num,record rec,account,date,name,detail,value,descriptorid, "
+                                "   (SELECT sum(value) "
+                                "   FROM entries e, relations r "
+                                "   WHERE e.number = r.compensation_number AND e.record = r.compensation_record "
+                                "   AND r.source_number=num AND r.source_record=rec) com "
+                                "FROM entries e,accounts a "
+                                "WHERE account = 132030 AND type=0 AND date >= '%1' AND special=0 "
+                                "AND e.account=a.number "
                                 "ORDER BY descriptorid,date").arg(uibilling->dateedit_since->date().toString("yyyy-MM-dd"));
   query.exec(querytext);
   int i=0;
   while (query.next()) {
-    if (!query.value(6).isNull() && query.value(5).toInt()<=query.value(7).toInt()) continue;
+    if (!query.value(7).isNull() && query.value(6).toInt()<=query.value(8).toInt()) continue;
 
     QSqlQuery fastquery;
     QString fastquerytext =   QString("SELECT count(*) "
                                       "FROM entries "
                                       "WHERE account = 132035 AND detail like '%1%' "
-                                      "AND descriptorid = '%2'").arg(query.value(4).toString()).arg(query.value(6).toString());
+                                      "AND descriptorid = '%2'").arg(query.value(5).toString()).arg(query.value(7).toString());
     fastquery.exec(fastquerytext);
     fastquery.next();
     int consecutive = fastquery.value(0).toInt()+1;
 
     uibilling->table_penalties->insertRow(uibilling->table_penalties->rowCount());
-    uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(6).toString()));
-    uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(4).toString()+QString(" [%1]").arg(consecutive)));
-    int debt = query.value(5).toInt();
-    if (!query.value(6).isNull()) debt -= query.value(7).toInt();
+    uibilling->table_penalties->setItem(i,0,new QTableWidgetItem(query.value(7).toString()));
+    uibilling->table_penalties->setItem(i,1,new QTableWidgetItem(query.value(5).toString()+QString(" [%1]").arg(consecutive)));
+    int debt = query.value(6).toInt();
+    if (!query.value(7).isNull()) debt -= query.value(8).toInt();
     uibilling->table_penalties->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(debt)));
     uibilling->table_penalties->setItem(i,3,new QTableWidgetItem(QString("%1").arg(penalty(uibilling->table_parms,uibilling->table_penalties->item(i,2)->text()))));
     for (int c=0; c<3; c++) {
@@ -1473,7 +1476,7 @@ void MainWindow::openAccountDetail()
 void MainWindow::loadAccountDetail(int account)
 {
   QSqlQuery query;
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,joinentry,descriptorid,voucher "
+  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,descriptorid,voucher "
                      "FROM entries,accounts "
                      "WHERE account LIKE '%1%' AND accounts.number=entries.account "
                      "ORDER BY date").arg(account));
@@ -1494,8 +1497,8 @@ void MainWindow::loadAccountDetail(int account)
     int     type        = query.value(2).toBool();
     int     value       = query.value(3).toInt();
     QString detail      = query.value(4).toString();
-    QString descriptor  = query.value(7).toString();
-    int     voucher     = query.value(8).toInt();
+    QString descriptor  = query.value(6).toString();
+    int     voucher     = query.value(7).toInt();
 
     type==DEBIT?balance+=value:balance-=value;
 
@@ -1530,15 +1533,6 @@ void MainWindow::loadSummaryDebts()
     uisummarydebts->table_info->insertRow(uisummarydebts->table_info->rowCount());
     uisummarydebts->table_info->setItem(i,0,new QTableWidgetItem(query.value(0).toString()));
     uisummarydebts->table_info->item(i,0)->setToolTip(query.value(1).toString());
-
-
-//    QString   querytext = QString("SELECT entries.number AS n,account,date,name,detail,value, "
-//                                  "(SELECT sum(value) FROM entries WHERE type=1 AND joinentry=n AND date <= '%2') "
-//                                  "FROM entries,accounts "
-//                                  "WHERE account LIKE '1320%' AND descriptorid='%1' AND type=0 "
-//                                  "AND entries.account=accounts.number "
-//                                  "AND date <= '%2'"
-//                                  "ORDER BY date").arg(query.value(0).toString()).arg(uisummarydebts->dateedit_date->date().toString("yyyy-MM-dd"));
 
     QString   querytext = QString("SELECT e.number num,record rec,account,date,name,detail,value val, "
                                   "  (SELECT sum(value) "
