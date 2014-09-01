@@ -1232,9 +1232,19 @@ void MainWindow::saveCollect()
   uicollect->label_balance->setText("0");
 }
 
-void MainWindow::resumeCollect(int,int col)
+void MainWindow::resumeCollect(int row,int col)
 {
   if (col==3) {
+    int row2 = uicollect->table_detail->item(row,2)->text().remove(QRegExp("[.,]")).toInt();
+    int row3 = uicollect->table_detail->item(row,3)->text().toInt();
+    if (row < uicollect->table_detail->rowCount()-1 && row3 > row2) {
+      QMessageBox(QMessageBox::Information,
+                  "Atención",
+                  "No puede ingresar un pago mayor a lo adeudado.",
+                  QMessageBox::Ok).exec();
+      uicollect->table_detail->item(row,3)->setText("0");
+      uicollect->table_detail->setFocus();
+    }
     int total=0;
     for (int i=0; i<uicollect->table_detail->rowCount(); i++) {
       total += uicollect->table_detail->item(i,3)->text().toInt();
