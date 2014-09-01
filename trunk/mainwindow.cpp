@@ -185,7 +185,7 @@ void MainWindow::openCollect()
   uicollect = new Ui::CollectWindow;
   uicollect->setupUi(subwindow);
   subwindow->setWindowTitle("Recaudo");
-  subwindow->setMinimumWidth(600);
+  subwindow->setMinimumWidth(610);
   ui->mdiArea->addSubWindow(subwindow);
   QStringList labels;
   uicollect->table_detail->setHorizontalHeaderLabels(labels<<"Concepto"<<"Detalle"<<"Deuda"<<"Valor");
@@ -304,8 +304,8 @@ void MainWindow::openHomeHistory()
   uihomehistory->table_history->setColumnWidth(2, 80);
   uihomehistory->table_history->setColumnWidth(3, 80);
   uihomehistory->table_history->setColumnWidth(4, 80);
-//  uihomehistory->table_history->setColumnHidden(5,true);
-//  uihomehistory->table_history->setColumnHidden(6,true);
+  uihomehistory->table_history->setColumnHidden(5,true);
+  uihomehistory->table_history->setColumnHidden(6,true);
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   connect(uihomehistory->lineedit_home,SIGNAL(editingFinished()),this,SLOT(loadHistory()));
@@ -607,7 +607,7 @@ void MainWindow::createGeneralBilling()
                                   "  (SELECT sum(value) "
                                   "   FROM entries e,relations r "
                                   "   WHERE r.compensation_number = e.number AND r.compensation_record = e.record "
-                                  "   AND source_number=num AND source_record=rec) "
+                                  "   AND source_number=num AND source_record=rec) com "
                                   "FROM entries e, accounts a "
                                   "WHERE e.account = a.number "
                                   "AND descriptorid = '%1' AND type=1 AND account like '28%' "
@@ -668,9 +668,9 @@ void MainWindow::createGeneralBilling()
     uibillinglist->table_billing->setItem(i,9,new QTableWidgetItem(QString("%L1").arg(total)));
 
     for (int c=0; c<11; c++) {
-      if (c!=2) {
-          uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
-      }
+//      if (c!=2) {
+//          uibillinglist->table_billing->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
+//      }
       if (c>=3) {
         uibillinglist->table_billing->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
       }
@@ -938,7 +938,7 @@ void MainWindow::saveGeneralBilling()
       querytext0 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(numberentry).arg(recordentry).arg(number).arg(1);
       query.exec(querytext0);
 
-      querytext1 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(number-1).arg(1).arg(numberentry).arg(2);
+      querytext1 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(number-1).arg(1).arg(number).arg(2);
       query.exec(querytext1);
     }
 
@@ -1092,7 +1092,13 @@ void MainWindow::loadDebt()
     uicollect->dateedit_date->setFocus();
   }
   else {
+    uicollect->label_home->setText("");
+    uicollect->label_owner->setText("");
     uicollect->label_data->setText("");
+    uicollect->table_detail->setRowCount(0);
+    uicollect->label_debt->setText("0");
+    uicollect->label_total->setText("0");
+    uicollect->label_balance->setText("0");
     uicollect->lineedit_home->selectAll();
     return;
   }
@@ -1221,8 +1227,9 @@ void MainWindow::saveCollect()
   uicollect->lineedit_voucher->setText("");
   uicollect->table_detail->setRowCount(0);
   uicollect->lineedit_home->setFocus();
-  uicollect->label_debt->setText("");
-  uicollect->label_total->setText("");
+  uicollect->label_debt->setText("0");
+  uicollect->label_total->setText("0");
+  uicollect->label_balance->setText("0");
 }
 
 void MainWindow::resumeCollect(int,int col)
@@ -1260,15 +1267,15 @@ void MainWindow::loadHistory()
   query.exec(QString("SELECT field1 FROM descriptors WHERE id='%1'").arg(id));
   query.next();
   uihomehistory->label_owner->setText(query.value(0).toString());
-  query.exec(QString("SELECT date,name,type+0,value,detail,e.number num,e.record rec,voucher,account,concat(e.number,record), "
-                     "   (SELECT concat(source_number,source_record) "
+  query.exec(QString("SELECT date,name,type+0,value,detail,e.number num,e.record rec,voucher,account,concat(e.number,' ',record), "
+                     "   (SELECT concat(source_number,' ',source_record) "
                      "   FROM relations "
                      "   WHERE compensation_number=num AND compensation_record=rec) "
                      "FROM entries e,accounts a "
                      "WHERE descriptorid='%1' AND state='1' "
                      "AND (account LIKE '1320%' OR account LIKE '2805%') "
                      "AND a.number=e.account "
-                     "ORDER BY date,e.number").arg(id));
+                     "ORDER BY date,a.number,e.number").arg(id));
 
   uihomehistory->table_history->setRowCount(0);
 
