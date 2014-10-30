@@ -66,7 +66,7 @@ void MainWindow::openPayments()
   subwindow->show();
   connect(uipayments->button_savepayment,SIGNAL(clicked()),this,SLOT(savePayment()));
   connect(uipayments->button_saveprovider,SIGNAL(clicked()),this,SLOT(saveProvider()));
-  connect(uipayments->combobox_type,SIGNAL(),uipayments->combobox_provider,SLOT(setFocus()));
+  //connect(uipayments->combobox_type,SIGNAL(),uipayments->combobox_provider,SLOT(setFocus()));
   connect(uipayments->combobox_provider,SIGNAL(currentTextChanged(QString)),uipayments->dateedit_date,SLOT(setFocus()));
   connect(uipayments->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDatePayment()));
   connect(uipayments->lineedit_value,SIGNAL(editingFinished()),uipayments->lineedit_detail,SLOT(setFocus()));
@@ -395,7 +395,7 @@ void MainWindow::loadProvidersType()
 {
   uipayments->combobox_type->addItem("");
   QSqlQuery query;
-  query.exec(QString("SELECT number,name FROM accounts WHERE handler IN (SELECT number FROM accounts WHERE handler = 51)"));
+  query.exec(QString("SELECT number,name FROM accounts WHERE number LIKE '5%' AND length(number)=6"));
   while (query.next())
   {
     uipayments->combobox_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
