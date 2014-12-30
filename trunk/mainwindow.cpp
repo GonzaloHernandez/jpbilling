@@ -929,10 +929,10 @@ void MainWindow::saveGeneralBilling()
       int numberentry = uibillinglist->table_billing->item(i,12)->text().split(" ").at(0).toInt();
       int recordentry = uibillinglist->table_billing->item(i,12)->text().split(" ").at(1).toInt();
 
-      querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',0,null,'1')").arg(number).arg(280595).arg(date).arg(DEBIT).arg(rebate).arg(detail).arg(name);
+      querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',0,null,'0')").arg(number).arg(280595).arg(date).arg(DEBIT).arg(rebate).arg(detail).arg(name);
       query.exec(querytext0);
 
-      querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',0,null,'1')").arg(number).arg(account0).arg(date).arg(CREDIT).arg(rebate).arg(detail).arg(name);
+      querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',0,null,'0')").arg(number).arg(account0).arg(date).arg(CREDIT).arg(rebate).arg(detail).arg(name);
       query.exec(querytext1);
 
       querytext0 = QString("INSERT INTO relations VALUES(%1,%2,%3,%4)").arg(numberentry).arg(recordentry).arg(number).arg(1);
