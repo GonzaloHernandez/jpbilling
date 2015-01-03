@@ -258,7 +258,7 @@ void MainWindow::openHomes()
 void MainWindow::openProviders()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
-    if (subwindow->windowTitle() == "Proveedores de servicios") {
+    if (subwindow->windowTitle() == "Proveedores o Beneficiarios") {
       subwindow->activateWindow();
       return;
     }

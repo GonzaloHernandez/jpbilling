@@ -174,7 +174,7 @@
      </widget>
      <widget class="QWidget" name="tab_provider">
       <attribute name="title">
-       <string>Nuevo proveedor</string>
+       <string>Nuevo Proveedor/Beneficiario</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
