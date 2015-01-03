@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Condominio los Frailejones</string>
+   <string>Condominio los Frailejones (Release 32)</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -141,7 +141,7 @@
      <normaloff>:/images/businessmen.png</normaloff>:/images/businessmen.png</iconset>
    </property>
    <property name="text">
-    <string>Proveedores</string>
+    <string>Proveedores o Beneficiarios</string>
    </property>
   </action>
   <action name="action_history_home">
