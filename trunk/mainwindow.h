@@ -15,6 +15,7 @@
 #include <ui_accountdetailwindow.h>
 #include <ui_summarydebts.h>
 #include <ui_summarycollect.h>
+#include <ui_budgetexecutionwindow.h>
 
 #define DEBIT 0
 #define CREDIT 1
@@ -44,6 +45,7 @@ private slots:
     void openHomeHistory();
     void openSummaryDebts();
     void openSummaryCollect();
+    void openBudgetExecution();
 
     void loadProvidersType();
     void loadProviders();
@@ -93,19 +95,25 @@ private slots:
 
     void loadSummaryCollect();
 
+    void loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item=NULL, int handler=0);
+    void loadAccountsBudgetTotals(QTreeWidget* widget);
+
+    void switchBudgetMounthHidde();
+
 private:
-    Ui::MainWindow*         ui;
-    Ui::PaymentsWindow*     uipayments;
-    Ui::BillingWindow*      uibilling;
-    Ui::BillingListWindow*  uibillinglist;
-    Ui::CollectWindow*      uicollect;
-    Ui::PUCWindow*          uipuc;
-    Ui::HomesWindow*        uihomes;
-    Ui::ProvidersWindow*    uiproviders;
-    Ui::HomeHistoryWindow*  uihomehistory;
-    Ui::AccountDetail*      uiaccountdetail;
-    Ui::SummaryDebtsWindow* uisummarydebts;
+    Ui::MainWindow*             ui;
+    Ui::PaymentsWindow*         uipayments;
+    Ui::BillingWindow*          uibilling;
+    Ui::BillingListWindow*      uibillinglist;
+    Ui::CollectWindow*          uicollect;
+    Ui::PUCWindow*              uipuc;
+    Ui::HomesWindow*            uihomes;
+    Ui::ProvidersWindow*        uiproviders;
+    Ui::HomeHistoryWindow*      uihomehistory;
+    Ui::AccountDetail*          uiaccountdetail;
+    Ui::SummaryDebtsWindow*     uisummarydebts;
     Ui::SummaryCollectWindow*   uisummarycollect;
+    Ui::BudgetExecutionWindow*  uibudgetexecution;
 
     bool                dbconnected;
     QSqlDatabase        db;

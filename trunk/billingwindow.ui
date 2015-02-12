@@ -279,7 +279,7 @@
      </widget>
      <widget class="QWidget" name="tab_particular">
       <attribute name="title">
-       <string>Otros multas</string>
+       <string>Otros cobros</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
