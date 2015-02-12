@@ -391,6 +391,50 @@ void MainWindow::openSummaryCollect()
     subwindow->show();
 }
 
+void MainWindow::openBudgetExecution()
+{
+    foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+      if (subwindow->windowTitle() == "Ejecución Presupuestal") {
+        subwindow->activateWindow();
+        return;
+      }
+    }
+
+    QWidget* subwindow = new QWidget;
+    uibudgetexecution= new Ui::BudgetExecutionWindow;
+    uibudgetexecution->setupUi(subwindow);
+    subwindow->setWindowTitle("Ejecución Presupuestal");
+    subwindow->setMinimumWidth(550);
+    subwindow->setMinimumHeight(400);
+    ui->mdiArea->addSubWindow(subwindow);
+    subwindow->show();
+    QStringList labels("Cuentas");
+    labels = labels << "Presup" << "Ene" << "Feb" << "Mar" << "Abr" << "May" << "Jun";
+    labels = labels << "Jul" << "Ago" << "Sep" << "Oct" << "Nov" << "Dic" << "Ejec" << "Saldo";
+    uibudgetexecution->tree_puc->setHeaderLabels(labels);
+
+    uibudgetexecution->tree_puc->setColumnWidth(0,300);
+    for (int i=1; i<16; i++)
+    {
+        uibudgetexecution->tree_puc->setColumnWidth(i,80);
+    }
+    loadAccountsBudget(uibudgetexecution->tree_puc);
+    loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
+    switchBudgetMounthHidde();
+    connect(uibudgetexecution->checkBox_1,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_2,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_3,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_4,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_5,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_6,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_7,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_8,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_9,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_10,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_11,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->checkBox_12,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+}
+
 void MainWindow::loadProvidersType()
 {
   uipayments->combobox_type->addItem("");
@@ -1005,6 +1049,7 @@ void MainWindow::loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item, int ha
     while (query.next()) {
       QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
       QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels<<query.value(0).toString());
+      it->setTextColor(0,Qt::darkRed);
       widget->addTopLevelItem(it);
       loadAccounts(widget,it,query.value(0).toInt());
     }
@@ -1014,6 +1059,10 @@ void MainWindow::loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item, int ha
     while (query.next()) {
       QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
       QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels<<query.value(0).toString());
+      switch (QString("%1").arg(handler).length()) {
+      case 1: it->setTextColor(0,Qt::darkBlue); break;
+      case 2: it->setTextColor(0,Qt::darkGreen); break;
+      }
       item->addChild(it);
       loadAccounts(widget,it,query.value(0).toInt());
     }
@@ -1675,4 +1724,133 @@ void MainWindow::loadSummaryCollect()
         uisummarycollect->table_info->setItem(i,1,new QTableWidgetItem(months[query.value(1).toInt()-1]));
         uisummarycollect->table_info->setItem(i,2,new QTableWidgetItem(QString("%L1").arg(query.value(2).toInt())));
     }
+}
+
+void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, int handler)
+{
+  QSqlQuery query;
+  if (!item) {
+    query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
+    while (query.next()) {
+      QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
+      labels = labels << "";
+      for (int i=1; i<=12; i++) {
+          QString subquerytext = QString("SELECT sum(value) value "
+                                         "FROM entries e,accounts a "
+                                         "WHERE e.account = a.number "
+                                         "AND account LIKE  '%1%' "
+                                         "AND year(date)=%2 "
+                                         "AND month(date)=%3; ")
+                  .arg(query.value(0).toString())
+                  .arg(2014)
+                  .arg(i);
+
+          QSqlQuery subquery;
+          subquery.exec(subquerytext);
+          if (subquery.next()) {
+              labels = labels << QString("%L1").arg(subquery.value(0).toInt());
+          }
+          else {
+              labels = labels << 0;
+          }
+      }
+
+      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+      it->setTextColor(0,Qt::darkRed);
+      for (int i=1; i<=14; i++) {
+          it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
+          it->setTextColor(i,Qt::darkRed);
+      }
+      widget->addTopLevelItem(it);
+      loadAccountsBudget(widget,it,query.value(0).toInt());
+    }
+  }
+  else {
+    query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
+    while (query.next()) {
+      QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
+      labels = labels << "";
+      for (int i=1; i<=12; i++) {
+          QString subquerytext = QString("SELECT sum(value) value "
+                                         "FROM entries e,accounts a "
+                                         "WHERE e.account = a.number "
+                                         "AND account LIKE '%1%' "
+                                         "AND year(date)=%2 "
+                                         "AND month(date)=%3; ")
+                  .arg(query.value(0).toString())
+                  .arg(2014)
+                  .arg(i);
+
+          QSqlQuery subquery;
+          subquery.exec(subquerytext);
+          if (subquery.next()) {
+              labels = labels << QString("%L1").arg(subquery.value(0).toInt());
+          }
+          else {
+              labels = labels << 0;
+          }
+      }
+      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+      QColor color = Qt::black;
+      switch (QString("%1").arg(handler).length()) {
+      case 1: color = Qt::darkBlue; break;
+      case 2: color = Qt::darkGreen; break;
+      }
+      it->setTextColor(0,color);
+      for (int i=1; i<=14; i++) {
+          it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
+          it->setTextColor(i,color);
+      }
+      item->addChild(it);
+      loadAccountsBudget(widget,it,query.value(0).toInt());
+    }
+  }
+}
+
+void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
+    QStringList totallabels = QStringList("TOTALES");
+    totallabels = totallabels << "";
+    for (int i=1; i<=12; i++) {
+        QString subquerytext = QString("SELECT sum(value) value "
+                                       "FROM entries e,accounts a "
+                                       "WHERE e.account = a.number "
+                                       "AND (account LIKE  '5%' OR account LIKE '15%') "
+                                       "AND year(date)=%1 "
+                                       "AND month(date)=%2; ")
+                .arg(2014)
+                .arg(i);
+
+        QSqlQuery subquery;
+        subquery.exec(subquerytext);
+        if (subquery.next()) {
+            totallabels = totallabels << QString("%L1").arg(subquery.value(0).toInt());
+        }
+        else {
+            totallabels = totallabels << 0;
+        }
+    }
+
+    QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, totallabels);
+    it->setTextColor(0,Qt::darkBlue);
+    for (int i=1; i<=14; i++) {
+        it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
+        it->setTextColor(i,Qt::darkBlue);
+    }
+    widget->addTopLevelItem(it);
+}
+
+void MainWindow::switchBudgetMounthHidde()
+{
+    uibudgetexecution->tree_puc->setColumnHidden(2,!uibudgetexecution->checkBox_1->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(3,!uibudgetexecution->checkBox_2->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(4,!uibudgetexecution->checkBox_3->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(5,!uibudgetexecution->checkBox_4->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(6,!uibudgetexecution->checkBox_5->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(7,!uibudgetexecution->checkBox_6->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(8,!uibudgetexecution->checkBox_7->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(9,!uibudgetexecution->checkBox_8->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(10,!uibudgetexecution->checkBox_9->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(11,!uibudgetexecution->checkBox_10->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(12,!uibudgetexecution->checkBox_11->isChecked());
+    uibudgetexecution->tree_puc->setColumnHidden(13,!uibudgetexecution->checkBox_12->isChecked());
 }

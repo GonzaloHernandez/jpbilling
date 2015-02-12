@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Condominio los Frailejones (Release 35)</string>
+   <string>Condominio los Frailejones (Release 36)</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -66,6 +66,7 @@
     <addaction name="action_history_home"/>
     <addaction name="action_summarydebts"/>
     <addaction name="action_summarycollect"/>
+    <addaction name="action_budgetexecution"/>
    </widget>
    <addaction name="menu_system"/>
    <addaction name="menu_activities"/>
@@ -170,6 +171,11 @@
   <action name="action_summarycollect">
    <property name="text">
     <string>Resumen de recaudo</string>
+   </property>
+  </action>
+  <action name="action_budgetexecution">
+   <property name="text">
+    <string>Ejecución presupuestal</string>
    </property>
   </action>
  </widget>
@@ -338,6 +344,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_budgetexecution</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openBudgetExecution()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -349,5 +371,6 @@
   <slot>openHomeHistory()</slot>
   <slot>openSummaryDebts()</slot>
   <slot>openSummaryCollect()</slot>
+  <slot>openBudgetExecution()</slot>
  </slots>
 </ui>

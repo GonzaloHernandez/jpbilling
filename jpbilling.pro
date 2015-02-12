@@ -31,7 +31,8 @@ FORMS    += mainwindow.ui \
     specialentry.ui \
     descriptorsbrowser.ui \
     summarydebts.ui \
-    summarycollect.ui
+    summarycollect.ui \
+    budgetexecutionwindow.ui
 
 RESOURCES += \
     jpbilling.qrc
