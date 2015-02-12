@@ -1744,102 +1744,75 @@ void MainWindow::loadSummaryCollect()
     }
 }
 
+QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
+    QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
+    labels = labels << "";
+    int total = 0;
+    for (int i=1; i<=12; i++) {
+        QString subquerytext = QString("SELECT sum(value) value "
+                                       "FROM entries e,accounts a "
+                                       "WHERE e.account = a.number "
+                                       "AND account LIKE  '%1%' "
+                                       "AND year(date)=%2 "
+                                       "AND month(date)=%3; ")
+                .arg(query.value(0).toString())
+                .arg(2014)
+                .arg(i);
+
+        QSqlQuery subquery;
+        subquery.exec(subquerytext);
+        if (subquery.next()) {
+            labels = labels << QString("%L1").arg(subquery.value(0).toInt());
+        }
+        else {
+            labels = labels << 0;
+        }
+        total += subquery.value(0).toInt();
+    }
+    labels = labels << QString("%L1").arg(total);
+
+    QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+    QColor textcolor,backcolor;
+    switch(query.value(0).toString().length()) {
+    case 2: textcolor = Qt::darkRed;        backcolor = QColor(255,200,200); break;
+    case 4: textcolor = Qt::darkGreen;      backcolor = QColor(200,255,200); break;
+    case 6: textcolor = QColor(50,50,50);   backcolor = QColor(255,255,255); break;
+    }
+
+    it->setTextColor(0,textcolor);
+    it->setBackgroundColor(0,backcolor);
+    for (int i=1; i<=14; i++) {
+        it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
+        it->setTextColor(i,textcolor);
+        it->setBackgroundColor(i,backcolor);
+    }
+    QFont font = it->font(1);
+    font.setBold(true);
+    it->setFont( 1,font);
+    it->setFont(14,font);
+    it->setFont(15,font);
+    return it;
+}
+
 void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, int handler)
 {
-  QSqlQuery query;
-  if (!item) {
-    query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
-    while (query.next()) {
-      QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
-      labels = labels << "";
-      int total = 0;
-      for (int i=1; i<=12; i++) {
-          QString subquerytext = QString("SELECT sum(value) value "
-                                         "FROM entries e,accounts a "
-                                         "WHERE e.account = a.number "
-                                         "AND account LIKE  '%1%' "
-                                         "AND year(date)=%2 "
-                                         "AND month(date)=%3; ")
-                  .arg(query.value(0).toString())
-                  .arg(2014)
-                  .arg(i);
-
-          QSqlQuery subquery;
-          subquery.exec(subquerytext);
-          if (subquery.next()) {
-              labels = labels << QString("%L1").arg(subquery.value(0).toInt());
-          }
-          else {
-              labels = labels << 0;
-          }
-          total += subquery.value(0).toInt();
-      }
-      labels = labels << QString("%L1").arg(total);
-
-      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
-      it->setTextColor(0,Qt::darkRed);
-      for (int i=1; i<=14; i++) {
-          it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
-          it->setTextColor(i,Qt::darkRed);
-      }
-      QFont font = it->font(1);
-      font.setBold(true);
-      it->setFont( 1,font);
-      it->setFont(14,font);
-      it->setFont(15,font);
-      widget->addTopLevelItem(it);
-      loadAccountsBudget(widget,it,query.value(0).toInt());
+    QSqlQuery query;
+    if (!item) {
+        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
+        while (query.next()) {
+          QTreeWidgetItem* it = addTreeWidgetItem(query);
+          widget->addTopLevelItem(it);
+          loadAccountsBudget(widget,it,query.value(0).toInt());
+        }
     }
-  }
-  else {
-    query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
-    while (query.next()) {
-      QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
-      labels = labels << "";
-      int total = 0;
-      for (int i=1; i<=12; i++) {
-          QString subquerytext = QString("SELECT sum(value) value "
-                                         "FROM entries e,accounts a "
-                                         "WHERE e.account = a.number "
-                                         "AND account LIKE '%1%' "
-                                         "AND year(date)=%2 "
-                                         "AND month(date)=%3; ")
-                  .arg(query.value(0).toString())
-                  .arg(2014)
-                  .arg(i);
-
-          QSqlQuery subquery;
-          subquery.exec(subquerytext);
-          if (subquery.next()) {
-              labels = labels << QString("%L1").arg(subquery.value(0).toInt());
-          }
-          else {
-              labels = labels << 0;
-          }
-          total += subquery.value(0).toInt();
-      }
-      labels = labels << QString("%L1").arg(total);
-
-      QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
-      QColor color = Qt::black;
-      switch (QString("%1").arg(handler).length()) {
-      case 1: color = Qt::darkBlue; break;
-      case 2: color = Qt::darkGreen; break;
-      }
-      it->setTextColor(0,color);
-      for (int i=1; i<=14; i++) {
-          it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
-          it->setTextColor(i,color);
-      }
-      QFont font = it->font(1);
-      font.setBold(true);
-      it->setFont( 1,font);
-      it->setFont(14,font);
-      it->setFont(15,font);
-      item->addChild(it);
-      loadAccountsBudget(widget,it,query.value(0).toInt());
+    else {
+        query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
+        while (query.next()) {
+            QTreeWidgetItem* it = addTreeWidgetItem(query);
+            item->addChild(it);
+            loadAccountsBudget(widget,it,query.value(0).toInt());
+        }
     }
-  }
 }
 
 void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
