@@ -1797,11 +1797,15 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
     case 6: textcolor = QColor(50,50,50);   backcolor = QColor(255,255,255); break;
     }
 
+    QFont font = it->font(3);
+    font.setPointSize(10);
+
     it->setTextColor(0,textcolor);
     it->setBackgroundColor(0,backcolor);
     for (int i=1; i<=15; i++) {
         it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
         it->setTextColor(i,textcolor);
+        it->setFont(i,font);
     }
 
     it->setBackgroundColor(0,backcolor);
@@ -1816,7 +1820,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
 {
     QSqlQuery query;
     if (!item) {
-        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
+        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15 OR number = 26");
         while (query.next()) {
           QTreeWidgetItem* it = addTreeWidgetItem(query);
           widget->addTopLevelItem(it);
@@ -1876,10 +1880,15 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
     labels = labels << QString("%L1").arg(balance);
 
     QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
+
+    QFont font = it->font(3);
+    font.setPointSize(10);
+
     it->setTextColor(0,Qt::darkBlue);
     for (int i=1; i<=15; i++) {
         it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
         it->setTextColor(i,Qt::darkBlue);
+        it->setFont(i,font);
     }
 
     widget->addTopLevelItem(it);
@@ -1899,4 +1908,9 @@ void MainWindow::switchBudgetMounthHidde()
     uibudgetexecution->tree_puc->setColumnHidden(11,!uibudgetexecution->checkBox_10->isChecked());
     uibudgetexecution->tree_puc->setColumnHidden(12,!uibudgetexecution->checkBox_11->isChecked());
     uibudgetexecution->tree_puc->setColumnHidden(13,!uibudgetexecution->checkBox_12->isChecked());
+}
+
+void MainWindow::adjustBudgetView()
+{
+
 }

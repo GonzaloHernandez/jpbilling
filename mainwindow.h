@@ -99,6 +99,7 @@ private slots:
     void loadAccountsBudgetTotals(QTreeWidget* widget);
 
     void switchBudgetMounthHidde();
+    void adjustBudgetView();
 
 private:
     Ui::MainWindow*             ui;
