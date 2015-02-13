@@ -423,8 +423,8 @@ void MainWindow::openBudgetExecution()
     ui->mdiArea->addSubWindow(subwindow);
     subwindow->show();
     QStringList labels("Cuentas");
-    labels = labels << "Presup" << "Ene" << "Feb" << "Mar" << "Abr" << "May" << "Jun";
-    labels = labels << "Jul" << "Ago" << "Sep" << "Oct" << "Nov" << "Dic" << "Ejec" << "Saldo";
+    labels = labels << "Presupuesto" << "Ene" << "Feb" << "Mar" << "Abr" << "May" << "Jun";
+    labels = labels << "Jul" << "Ago" << "Sep" << "Oct" << "Nov" << "Dic" << "Ejecución" << "Saldo";
     uibudgetexecution->tree_puc->setHeaderLabels(labels);
 
     uibudgetexecution->tree_puc->setColumnWidth(0,300);
@@ -1746,7 +1746,22 @@ void MainWindow::loadSummaryCollect()
 
 QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
     QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
-    labels = labels << "";
+    int budget = 0;
+    QString subquerytext = QString("SELECT sum(value) "
+                                   "FROM budget "
+                                   "WHERE year = %1 "
+                                   "AND account LIKE '%2%'; ")
+            .arg(2014)
+            .arg(query.value(0).toString());
+    QSqlQuery subquery;
+    subquery.exec(subquerytext);
+    if (subquery.next()) {
+        budget = subquery.value(0).toInt();
+        labels = labels << QString("%L1").arg(budget);
+    }
+    else {
+        labels = labels << "";
+    }
     int total = 0;
     for (int i=1; i<=12; i++) {
         QString subquerytext = QString("SELECT sum(value) value "
@@ -1771,6 +1786,9 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
     }
     labels = labels << QString("%L1").arg(total);
 
+    int balance = budget - total;
+    labels = labels << QString("%L1").arg(balance);
+
     QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
     QColor textcolor,backcolor;
     switch(query.value(0).toString().length()) {
@@ -1781,16 +1799,16 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
 
     it->setTextColor(0,textcolor);
     it->setBackgroundColor(0,backcolor);
-    for (int i=1; i<=14; i++) {
+    for (int i=1; i<=15; i++) {
         it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
         it->setTextColor(i,textcolor);
-        it->setBackgroundColor(i,backcolor);
     }
-    QFont font = it->font(1);
-    font.setBold(true);
-    it->setFont( 1,font);
-    it->setFont(14,font);
-    it->setFont(15,font);
+
+    it->setBackgroundColor(0,backcolor);
+    it->setBackgroundColor(1,backcolor);
+    it->setBackgroundColor(14,backcolor);
+    it->setBackgroundColor(15,backcolor);
+
     return it;
 }
 
@@ -1817,7 +1835,20 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
 
 void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
     QStringList labels = QStringList("TOTALES");
-    labels = labels << "";
+    int budget = 0;
+    QString subquerytext = QString("SELECT sum(value) "
+                                   "FROM budget "
+                                   "WHERE year = %1; ")
+            .arg(2014);
+    QSqlQuery subquery;
+    subquery.exec(subquerytext);
+    if (subquery.next()) {
+        budget = subquery.value(0).toInt();
+        labels = labels << QString("%L1").arg(budget);
+    }
+    else {
+        labels = labels << "";
+    }
     int total = 0;
     for (int i=1; i<=12; i++) {
         QString subquerytext = QString("SELECT sum(value) value "
@@ -1841,17 +1872,16 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
     }
     labels = labels << QString("%L1").arg(total);
 
+    int balance = budget - total;
+    labels = labels << QString("%L1").arg(balance);
+
     QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
     it->setTextColor(0,Qt::darkBlue);
-    for (int i=1; i<=14; i++) {
+    for (int i=1; i<=15; i++) {
         it->setTextAlignment(i,Qt::AlignRight|Qt::AlignCenter);
         it->setTextColor(i,Qt::darkBlue);
     }
-    QFont font = it->font(1);
-    font.setBold(true);
-    it->setFont( 1,font);
-    it->setFont(14,font);
-    it->setFont(15,font);
+
     widget->addTopLevelItem(it);
 }
 
