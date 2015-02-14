@@ -1569,6 +1569,15 @@ void MainWindow::loadAccountDetail(int account, int year, int month)
                          "AND account LIKE '%1%' "
                          "ORDER BY date").arg(account));
   }
+  else if (month==13){
+      query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
+                         "FROM entries e,accounts a,descriptors d "
+                         "WHERE e.descriptorid = d.id "
+                         "AND a.number=e.account "
+                         "AND account LIKE '%1%' "
+                         "AND year(date) = %2 "
+                         "ORDER BY date").arg(account).arg(year));
+  }
   else {
       query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
                          "FROM entries e,accounts a,descriptors d "
@@ -1939,8 +1948,16 @@ void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 
 void MainWindow::openAccountDetail(int account, int year, int month)
 {
+    QString months[] = {"","Enero","Febrero","Marzo","Abril","Mayo","Junio"
+                       "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
+    QString title = "";
+    if (month<1) return;
+    if (month>13) return;
+    if (month==13) title = QString("%1").arg(year);
+    else title = QString("%1/%2").arg(months[month]).arg(year);
+
     foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
-      if (subwindow->windowTitle() == QString("Ejecución cuenta %1 [%2-%3]").arg(account).arg(year).arg(month)) {
+      if (subwindow->windowTitle() == QString("Ejecución cuenta %1 [%2]").arg(account).arg(title)) {
         subwindow->activateWindow();
         return;
       }
@@ -1949,7 +1966,7 @@ void MainWindow::openAccountDetail(int account, int year, int month)
     QWidget* subwindow = new QWidget;
     uiaccountdetail = new Ui::AccountDetail;
     uiaccountdetail->setupUi(subwindow);
-    subwindow->setWindowTitle(QString("Ejecución cuenta %1 [%2-%3]").arg(account).arg(year).arg(month));
+    subwindow->setWindowTitle(QString("Ejecución cuenta %1 [%2]").arg(account).arg(title));
     subwindow->setMinimumWidth(620);
     QStringList labels;
     uiaccountdetail->table_detail->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito");
