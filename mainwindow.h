@@ -87,7 +87,7 @@ private slots:
     void highlight();
 
     void openAccountDetail();
-    void loadAccountDetail(int);
+    void loadAccountDetail(int,int year=0,int month=0);
 
     void loadSummaryDebts();
     void showDateSummaryDebts();
@@ -100,6 +100,8 @@ private slots:
 
     void switchBudgetMounthHidde();
     void adjustBudgetView();
+    void openBudgetDetail(QTreeWidgetItem*,int);
+    void openAccountDetail(int account,int year,int month);
 
 private:
     Ui::MainWindow*             ui;
