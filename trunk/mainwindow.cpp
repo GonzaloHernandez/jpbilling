@@ -451,6 +451,7 @@ void MainWindow::openBudgetExecution()
     connect(uibudgetexecution->checkBox_10,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->checkBox_11,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->checkBox_12,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
+    connect(uibudgetexecution->tree_puc,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(openBudgetDetail(QTreeWidgetItem*,int)));
 }
 
 void MainWindow::loadProvidersType()
@@ -1557,13 +1558,27 @@ void MainWindow::openAccountDetail()
  * 2,3,4 CREDIT
  * */
 
-void MainWindow::loadAccountDetail(int account)
+void MainWindow::loadAccountDetail(int account, int year, int month)
 {
   QSqlQuery query;
-  query.exec(QString("SELECT date,name,type+0,value,detail,entries.number,descriptorid,voucher "
-                     "FROM entries,accounts "
-                     "WHERE account LIKE '%1%' AND accounts.number=entries.account "
-                     "ORDER BY date").arg(account));
+  if (year==0) {
+      query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
+                         "FROM entries e,accounts a,descriptors d "
+                         "WHERE e.descriptorid = d.id "
+                         "AND a.number=e.account "
+                         "AND account LIKE '%1%' "
+                         "ORDER BY date").arg(account));
+  }
+  else {
+      query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
+                         "FROM entries e,accounts a,descriptors d "
+                         "WHERE e.descriptorid = d.id "
+                         "AND a.number=e.account "
+                         "AND account LIKE '%1%' "
+                         "AND year(date) = %2 "
+                         "AND month(date) = %3 "
+                         "ORDER BY date").arg(account).arg(year).arg(month));
+  }
 
   uiaccountdetail->table_detail->setRowCount(0);
 
@@ -1583,6 +1598,7 @@ void MainWindow::loadAccountDetail(int account)
     QString detail      = query.value(4).toString();
     QString descriptor  = query.value(6).toString();
     int     voucher     = query.value(7).toInt();
+    QString name        = query.value(8).toString();
 
     type==DEBIT?balance+=value:balance-=value;
 
@@ -1595,7 +1611,7 @@ void MainWindow::loadAccountDetail(int account)
     uiaccountdetail->table_detail->item(i,3)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
     uiaccountdetail->table_detail->item(i,4)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
 
-    uiaccountdetail->table_detail->item(i,1)->setToolTip(QString("Comprobante. %1").arg(voucher));
+    uiaccountdetail->table_detail->item(i,1)->setToolTip(QString("%1 [Comprobante %2]").arg(name).arg(voucher));
 
     for (int c=0; c<5; c++) {
       uiaccountdetail->table_detail->item(i,c)->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
@@ -1913,4 +1929,36 @@ void MainWindow::switchBudgetMounthHidde()
 void MainWindow::adjustBudgetView()
 {
 
+}
+
+void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
+{
+    QString account = it->data(0,0).toString().split(" ").at(0);
+    openAccountDetail(account.toInt(),2014,column-1);
+}
+
+void MainWindow::openAccountDetail(int account, int year, int month)
+{
+    foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+      if (subwindow->windowTitle() == QString("Ejecución cuenta %1 [%2-%3]").arg(account).arg(year).arg(month)) {
+        subwindow->activateWindow();
+        return;
+      }
+    }
+
+    QWidget* subwindow = new QWidget;
+    uiaccountdetail = new Ui::AccountDetail;
+    uiaccountdetail->setupUi(subwindow);
+    subwindow->setWindowTitle(QString("Ejecución cuenta %1 [%2-%3]").arg(account).arg(year).arg(month));
+    subwindow->setMinimumWidth(620);
+    QStringList labels;
+    uiaccountdetail->table_detail->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito");
+    uiaccountdetail->table_detail->setColumnWidth(0, 90);
+    uiaccountdetail->table_detail->setColumnWidth(1,350);
+    uiaccountdetail->table_detail->setColumnWidth(2, 80);
+    uiaccountdetail->table_detail->setColumnWidth(3, 80);
+    uiaccountdetail->table_detail->setColumnHidden(4,true);
+    ui->mdiArea->addSubWindow(subwindow);
+    subwindow->show();
+    loadAccountDetail(account,year,month);
 }
