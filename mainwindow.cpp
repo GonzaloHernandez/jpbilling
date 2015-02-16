@@ -1845,7 +1845,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
 {
     QSqlQuery query;
     if (!item) {
-        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15 OR number = 26");
+        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
         while (query.next()) {
           QTreeWidgetItem* it = addTreeWidgetItem(query);
           widget->addTopLevelItem(it);
