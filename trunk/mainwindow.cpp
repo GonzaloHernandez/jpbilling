@@ -452,6 +452,7 @@ void MainWindow::openBudgetExecution()
     connect(uibudgetexecution->checkBox_11,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->checkBox_12,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->tree_puc,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(openBudgetDetail(QTreeWidgetItem*,int)));
+    connect(uibudgetexecution->spinBox_year,SIGNAL(valueChanged(int)),this,SLOT(changeBudgetYear(int)));
 }
 
 void MainWindow::loadProvidersType()
@@ -1769,14 +1770,14 @@ void MainWindow::loadSummaryCollect()
     }
 }
 
-QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
+QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query,int year) {
     QStringList labels = QStringList(query.value(0).toString()+" - "+query.value(1).toString());
     int budget = 0;
     QString subquerytext = QString("SELECT sum(value) "
                                    "FROM budget "
                                    "WHERE year = %1 "
                                    "AND account LIKE '%2%'; ")
-            .arg(2014)
+            .arg(year)
             .arg(query.value(0).toString());
     QSqlQuery subquery;
     subquery.exec(subquerytext);
@@ -1796,7 +1797,7 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
                                        "AND year(date)=%2 "
                                        "AND month(date)=%3; ")
                 .arg(query.value(0).toString())
-                .arg(2014)
+                .arg(year)
                 .arg(i);
 
         QSqlQuery subquery;
@@ -1843,11 +1844,12 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query) {
 
 void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, int handler)
 {
+    int year = uibudgetexecution->spinBox_year->text().toInt();
     QSqlQuery query;
     if (!item) {
         query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
         while (query.next()) {
-          QTreeWidgetItem* it = addTreeWidgetItem(query);
+          QTreeWidgetItem* it = addTreeWidgetItem(query,year);
           widget->addTopLevelItem(it);
           loadAccountsBudget(widget,it,query.value(0).toInt());
         }
@@ -1855,7 +1857,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
     else {
         query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
         while (query.next()) {
-            QTreeWidgetItem* it = addTreeWidgetItem(query);
+            QTreeWidgetItem* it = addTreeWidgetItem(query,year);
             item->addChild(it);
             loadAccountsBudget(widget,it,query.value(0).toInt());
         }
@@ -1863,12 +1865,13 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
 }
 
 void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
+    int year = uibudgetexecution->spinBox_year->text().toInt();
     QStringList labels = QStringList("TOTALES");
     int budget = 0;
     QString subquerytext = QString("SELECT sum(value) "
                                    "FROM budget "
                                    "WHERE year = %1; ")
-            .arg(2014);
+            .arg(year);
     QSqlQuery subquery;
     subquery.exec(subquerytext);
     if (subquery.next()) {
@@ -1886,7 +1889,7 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
                                        "AND (account LIKE  '5%' OR account LIKE '15%') "
                                        "AND year(date)=%1 "
                                        "AND month(date)=%2; ")
-                .arg(2014)
+                .arg(year)
                 .arg(i);
 
         QSqlQuery subquery;
@@ -1942,8 +1945,9 @@ void MainWindow::adjustBudgetView()
 
 void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 {
+    int year = uibudgetexecution->spinBox_year->text().toInt();
     QString account = it->data(0,0).toString().split(" ").at(0);
-    openAccountDetail(account.toInt(),2014,column-1);
+    openAccountDetail(account.toInt(),year,column-1);
 }
 
 void MainWindow::openAccountDetail(int account, int year, int month)
@@ -1979,3 +1983,11 @@ void MainWindow::openAccountDetail(int account, int year, int month)
     subwindow->show();
     loadAccountDetail(account,year,month);
 }
+
+void MainWindow::changeBudgetYear(int)
+{
+    uibudgetexecution->tree_puc->clear();
+    loadAccountsBudget(uibudgetexecution->tree_puc);
+    loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
+}
+

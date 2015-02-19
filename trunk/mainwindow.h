@@ -102,6 +102,7 @@ private slots:
     void adjustBudgetView();
     void openBudgetDetail(QTreeWidgetItem*,int);
     void openAccountDetail(int account,int year,int month);
+    void changeBudgetYear(int);
 
 private:
     Ui::MainWindow*             ui;
