@@ -9,6 +9,8 @@
 #include <QPrinter>
 #include <QPainter>
 #include <QItemDelegate>
+#include <QInputDialog>
+#include <QDir>
 
 #define ch(x) (int)(10200.0*x/200.0)
 #define cv(x) (int)(13200.0*x/270.0)
@@ -1942,9 +1944,6 @@ void MainWindow::adjustBudgetView()
 {
 
 }
-
-#include <QInputDialog>
-#include <QDir>
 
 void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 {
