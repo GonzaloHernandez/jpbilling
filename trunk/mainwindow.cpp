@@ -1945,17 +1945,42 @@ void MainWindow::adjustBudgetView()
 
 }
 
+int updateBudgetValues(QTreeWidget* tree, QTreeWidgetItem *it) {
+    if (!it) {
+        int sum = 0;
+        for (int i=0; i<tree->topLevelItemCount(); i++) {
+           sum += updateBudgetValues(tree,tree->topLevelItem(i));
+        }
+        return sum;
+    }
+    else {
+        if (it->childCount()==0) return it->text(1).remove(QRegExp("[.,]")).toInt();
+        int sum = 0;
+        for (int i=0; i<it->childCount(); i++) {
+           sum += updateBudgetValues(tree,it->child(i));
+        }
+        int total = it->text(14).remove(QRegExp("[.,]")).toInt();
+        it->setText(1,QString("%L1").arg(sum));
+        it->setText(15,QString("%L1").arg(sum-total));
+        return sum;
+    }
+}
+
 void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 {
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QString account = it->data(0,0).toString().split(" ").at(0);
     if (column == 1) {
+        if (it->childCount()!=0) return;
         bool ok;
         QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
                                              tr("Valor:"), QLineEdit::Normal,
                                              it->text(1), &ok);
         if (ok && !text.isEmpty()) {
-            it->setText(1,text);
+            it->setText(1,QString("%L1").arg(text.toInt()));
+            int total = it->text(14).remove(QRegExp("[.,]")).toInt();
+            it->setText(15,QString("%L1").arg(text.toInt()-total));
+            updateBudgetValues(uibudgetexecution->tree_puc,NULL);
         }
     }
     else {
