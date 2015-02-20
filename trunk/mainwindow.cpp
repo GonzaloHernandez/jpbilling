@@ -441,6 +441,7 @@ void MainWindow::openBudgetExecution()
     loadAccountsBudget(uibudgetexecution->tree_puc);
     loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
     switchBudgetMounthHidde();
+    uibudgetexecution->tree_puc->expandToDepth(0);
     connect(uibudgetexecution->checkBox_1,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->checkBox_2,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->checkBox_3,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
@@ -1948,7 +1949,7 @@ void MainWindow::adjustBudgetView()
 int updateBudgetValues(QTreeWidget* tree, QTreeWidgetItem *it) {
     if (!it) {
         int sum = 0;
-        for (int i=0; i<tree->topLevelItemCount(); i++) {
+        for (int i=0; i<tree->topLevelItemCount()-1; i++) {
            sum += updateBudgetValues(tree,tree->topLevelItem(i));
         }
         return sum;
@@ -1980,7 +1981,10 @@ void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
             it->setText(1,QString("%L1").arg(text.toInt()));
             int total = it->text(14).remove(QRegExp("[.,]")).toInt();
             it->setText(15,QString("%L1").arg(text.toInt()-total));
-            updateBudgetValues(uibudgetexecution->tree_puc,NULL);
+            int sum = updateBudgetValues(uibudgetexecution->tree_puc,NULL);
+            uibudgetexecution->tree_puc->topLevelItem(3)->setText(1,QString("%L1").arg(sum));
+            total = uibudgetexecution->tree_puc->topLevelItem(3)->text(14).remove(QRegExp("[.,]")).toInt();
+            uibudgetexecution->tree_puc->topLevelItem(3)->setText(15,QString("%L1").arg(sum-total));
         }
     }
     else {
@@ -2027,5 +2031,6 @@ void MainWindow::changeBudgetYear(int)
     uibudgetexecution->tree_puc->clear();
     loadAccountsBudget(uibudgetexecution->tree_puc);
     loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
+    uibudgetexecution->tree_puc->expandToDepth(0);
 }
 
