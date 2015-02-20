@@ -1943,11 +1943,25 @@ void MainWindow::adjustBudgetView()
 
 }
 
+#include <QInputDialog>
+#include <QDir>
+
 void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 {
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QString account = it->data(0,0).toString().split(" ").at(0);
-    openAccountDetail(account.toInt(),year,column-1);
+    if (column == 1) {
+        bool ok;
+        QString text = QInputDialog::getText(this, tr("QInputDialog::getText()"),
+                                             tr("Valor:"), QLineEdit::Normal,
+                                             it->text(1), &ok);
+        if (ok && !text.isEmpty()) {
+            it->setText(1,text);
+        }
+    }
+    else {
+        openAccountDetail(account.toInt(),year,column-1);
+    }
 }
 
 void MainWindow::openAccountDetail(int account, int year, int month)
@@ -1955,7 +1969,7 @@ void MainWindow::openAccountDetail(int account, int year, int month)
     QString months[] = {"","Enero","Febrero","Marzo","Abril","Mayo","Junio"
                        "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
     QString title = "";
-    if (month<1) return;
+
     if (month>13) return;
     if (month==13) title = QString("%1").arg(year);
     else title = QString("%1/%2").arg(months[month]).arg(year);
