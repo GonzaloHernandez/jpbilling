@@ -1990,16 +1990,17 @@ void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 
             int year = uibudgetexecution->spinBox_year->value();
             int account = it->text(16).toInt();
+            int value = text.toInt();
 
             QString querytext = QString("SELECT * FROM budget WHERE year=%1 AND account=%2; ").arg(year).arg(account);
             QSqlQuery query;
             query.exec(querytext);
             if (query.next()) {
-                querytext = QString("UPDATE budget SET value=%1 WHERE year=%2 AND account=%3; ").arg(sum).arg(year).arg(account);
+                querytext = QString("UPDATE budget SET value=%1 WHERE year=%2 AND account=%3; ").arg(value).arg(year).arg(account);
                 query.exec(querytext);
             }
             else {
-                querytext = QString("INSERT INTO budget VALUES (%1,%2,%3,null); ").arg(year).arg(account).arg(sum);
+                querytext = QString("INSERT INTO budget VALUES (%1,%2,%3,null); ").arg(year).arg(account).arg(value);
                 query.exec(querytext);
             }
         }
