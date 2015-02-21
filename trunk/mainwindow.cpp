@@ -1818,6 +1818,8 @@ QTreeWidgetItem* addTreeWidgetItem(QSqlQuery query,int year) {
     int balance = budget - total;
     labels = labels << QString("%L1").arg(balance);
 
+    labels = labels << QString("%1").arg(query.value(0).toString());
+
     QTreeWidgetItem* it = new QTreeWidgetItem((QTreeWidget*)0, labels);
     QColor textcolor,backcolor;
     switch(query.value(0).toString().length()) {
@@ -1985,6 +1987,21 @@ void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
             uibudgetexecution->tree_puc->topLevelItem(3)->setText(1,QString("%L1").arg(sum));
             total = uibudgetexecution->tree_puc->topLevelItem(3)->text(14).remove(QRegExp("[.,]")).toInt();
             uibudgetexecution->tree_puc->topLevelItem(3)->setText(15,QString("%L1").arg(sum-total));
+
+            int year = uibudgetexecution->spinBox_year->value();
+            int account = it->text(16).toInt();
+
+            QString querytext = QString("SELECT * FROM budget WHERE year=%1 AND account=%2; ").arg(year).arg(account);
+            QSqlQuery query;
+            query.exec(querytext);
+            if (query.next()) {
+                querytext = QString("UPDATE budget SET value=%1 WHERE year=%2 AND account=%3; ").arg(sum).arg(year).arg(account);
+                query.exec(querytext);
+            }
+            else {
+                querytext = QString("INSERT INTO budget VALUES (%1,%2,%3,null); ").arg(year).arg(account).arg(sum);
+                query.exec(querytext);
+            }
         }
     }
     else {
