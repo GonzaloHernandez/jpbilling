@@ -1567,26 +1567,26 @@ void MainWindow::loadAccountDetail(int account, int year, int month)
   QSqlQuery query;
   if (year==0) {
       query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
-                         "FROM entries e,accounts a,descriptors d "
-                         "WHERE e.descriptorid = d.id "
-                         "AND a.number=e.account "
+                         "FROM accounts a,entries e "
+                         "LEFT JOIN descriptors d ON e.descriptorid = d.id "
+                         "WHERE a.number=e.account "
                          "AND account LIKE '%1%' "
                          "ORDER BY date").arg(account));
   }
   else if (month==13){
       query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
-                         "FROM entries e,accounts a,descriptors d "
-                         "WHERE e.descriptorid = d.id "
-                         "AND a.number=e.account "
+                         "FROM accounts a,entries e "
+                         "LEFT JOIN descriptors d ON e.descriptorid = d.id "
+                         "WHERE a.number=e.account "
                          "AND account LIKE '%1%' "
                          "AND year(date) = %2 "
                          "ORDER BY date").arg(account).arg(year));
   }
   else {
       query.exec(QString("SELECT date,name,e.type+0,value,detail,e.number,d.id,voucher,field1 "
-                         "FROM entries e,accounts a,descriptors d "
-                         "WHERE e.descriptorid = d.id "
-                         "AND a.number=e.account "
+                         "FROM accounts a,entries e "
+                         "LEFT JOIN descriptors d ON e.descriptorid = d.id "
+                         "WHERE a.number=e.account "
                          "AND account LIKE '%1%' "
                          "AND year(date) = %2 "
                          "AND month(date) = %3 "
