@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Condominio los Frailejones (Release 52)</string>
+   <string>Condominio los Frailejones (Release 53)</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -38,7 +38,7 @@
      <x>0</x>
      <y>0</y>
      <width>400</width>
-     <height>24</height>
+     <height>27</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_system">
@@ -59,7 +59,7 @@
     <addaction name="action_billing"/>
     <addaction name="action_collect"/>
    </widget>
-   <widget class="QMenu" name="menuReportes">
+   <widget class="QMenu" name="menu_reports">
     <property name="title">
      <string>Reportes</string>
     </property>
@@ -68,9 +68,19 @@
     <addaction name="action_summarycollect"/>
     <addaction name="action_budgetexecution"/>
    </widget>
+   <widget class="QMenu" name="menu_tools">
+    <property name="title">
+     <string>Herramientas</string>
+    </property>
+    <addaction name="action_createbackup"/>
+    <addaction name="action_restorebackup"/>
+    <addaction name="separator"/>
+    <addaction name="action_export"/>
+   </widget>
    <addaction name="menu_system"/>
    <addaction name="menu_activities"/>
-   <addaction name="menuReportes"/>
+   <addaction name="menu_reports"/>
+   <addaction name="menu_tools"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -176,6 +186,21 @@
   <action name="action_budgetexecution">
    <property name="text">
     <string>Ejecución presupuestal</string>
+   </property>
+  </action>
+  <action name="action_createbackup">
+   <property name="text">
+    <string>Crear copia de seguiridad</string>
+   </property>
+  </action>
+  <action name="action_restorebackup">
+   <property name="text">
+    <string>Restaurar copia de seguridad</string>
+   </property>
+  </action>
+  <action name="action_export">
+   <property name="text">
+    <string>Exportar</string>
    </property>
   </action>
  </widget>
@@ -360,6 +385,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_createbackup</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>createBackup()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -372,5 +413,6 @@
   <slot>openSummaryDebts()</slot>
   <slot>openSummaryCollect()</slot>
   <slot>openBudgetExecution()</slot>
+  <slot>createBackup()</slot>
  </slots>
 </ui>
