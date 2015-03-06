@@ -104,6 +104,8 @@ private slots:
     void openAccountDetail(int account,int year,int month);
     void changeBudgetYear(int);
 
+    void createBackup();
+
 private:
     Ui::MainWindow*             ui;
     Ui::PaymentsWindow*         uipayments;

@@ -11,6 +11,8 @@
 #include <QItemDelegate>
 #include <QInputDialog>
 #include <QDir>
+#include <QFileDialog>
+#include <QProcess>
 
 #define ch(x) (int)(10200.0*x/200.0)
 #define cv(x) (int)(13200.0*x/270.0)
@@ -2050,5 +2052,28 @@ void MainWindow::changeBudgetYear(int)
     loadAccountsBudget(uibudgetexecution->tree_puc);
     loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
     uibudgetexecution->tree_puc->expandToDepth(0);
+}
+
+void MainWindow::createBackup()
+{
+
+    QString backupname = QString("jpbilling-backup-%1%2%3-%4%5%6.sql")
+            .arg(QString("%1").arg(QDate::currentDate().year()).leftJustified(2,'0'))
+            .arg(QDate::currentDate().month())
+            .arg(QDate::currentDate().day())
+            .arg(QTime::currentTime().hour())
+            .arg(QString("%1").arg(QTime::currentTime().minute()).rightJustified(2,'0'))
+            .arg(QString("%1").arg(QTime::currentTime().second()).rightJustified(2,'0'));
+
+    QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
+                                backupname,
+                                tr("DB Backup (*.sql)"));
+
+    QProcess dumpProcess(this);
+    QStringList args;
+    args << "-uroot" << "-p123" << "accounting" <<"-B";
+    dumpProcess.setStandardOutputFile(fileName);
+    dumpProcess.start("mysqldump", args);
+    while( !dumpProcess.waitForFinished(100) );
 }
 
