@@ -2058,16 +2058,18 @@ void MainWindow::createBackup()
 {
 
     QString backupname = QString("jpbilling-backup-%1%2%3-%4%5%6.sql")
-            .arg(QString("%1").arg(QDate::currentDate().year()).leftJustified(2,'0'))
-            .arg(QDate::currentDate().month())
-            .arg(QDate::currentDate().day())
-            .arg(QTime::currentTime().hour())
+            .arg(QString("%1").arg(QDate::currentDate().year()).rightJustified(4,'0'))
+            .arg(QString("%1").arg(QDate::currentDate().month()).rightJustified(2,'0'))
+            .arg(QString("%1").arg(QDate::currentDate().day()).rightJustified(2,'0'))
+            .arg(QString("%1").arg(QTime::currentTime().hour()).rightJustified(2,'0'))
             .arg(QString("%1").arg(QTime::currentTime().minute()).rightJustified(2,'0'))
             .arg(QString("%1").arg(QTime::currentTime().second()).rightJustified(2,'0'));
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save File"),
                                 backupname,
                                 tr("DB Backup (*.sql)"));
+
+    if (fileName=="") return;
 
     QProcess dumpProcess(this);
     QStringList args;
