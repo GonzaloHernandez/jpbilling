@@ -89,7 +89,7 @@ void MainWindow::openPayments()
   connect(uipayments->dateedit_date,SIGNAL(editingFinished()),this,SLOT(showDatePayment()));
   connect(uipayments->lineedit_value,SIGNAL(editingFinished()),uipayments->lineedit_detail,SLOT(setFocus()));
   connect(uipayments->lineedit_detail,SIGNAL(editingFinished()),uipayments->lineedit_voucher,SLOT(setFocus()));
-  loadProvidersType();
+  loadPaymentType();
   loadProviders();
   loadResources();
 }
@@ -460,11 +460,11 @@ void MainWindow::openBudgetExecution()
     connect(uibudgetexecution->spinBox_year,SIGNAL(valueChanged(int)),this,SLOT(changeBudgetYear(int)));
 }
 
-void MainWindow::loadProvidersType()
+void MainWindow::loadPaymentType()
 {
   uipayments->combobox_type->addItem("");
   QSqlQuery query;
-  query.exec(QString("SELECT number,name FROM accounts WHERE number LIKE '5%' AND length(number)=6"));
+  query.exec(QString("SELECT number,name FROM accounts WHERE (number LIKE '5%' OR number LIKE '1524%') AND length(number)=6"));
   while (query.next())
   {
     uipayments->combobox_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
