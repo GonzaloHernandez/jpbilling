@@ -47,7 +47,7 @@ private slots:
     void openSummaryCollect();
     void openBudgetExecution();
 
-    void loadProvidersType();
+    void loadPaymentType();
     void loadProviders();
     void loadResources();
     void savePayment();
