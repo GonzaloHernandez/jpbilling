@@ -103,6 +103,7 @@ private slots:
     void openBudgetDetail(QTreeWidgetItem*,int);
     void openAccountDetail(int account,int year,int month);
     void changeBudgetYear(int);
+    void printBudget();
 
     void createBackup();
 

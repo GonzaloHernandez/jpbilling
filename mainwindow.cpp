@@ -458,6 +458,7 @@ void MainWindow::openBudgetExecution()
     connect(uibudgetexecution->checkBox_12,SIGNAL(clicked()),this,SLOT(switchBudgetMounthHidde()));
     connect(uibudgetexecution->tree_puc,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(openBudgetDetail(QTreeWidgetItem*,int)));
     connect(uibudgetexecution->spinBox_year,SIGNAL(valueChanged(int)),this,SLOT(changeBudgetYear(int)));
+    connect(uibudgetexecution->print,SIGNAL(clicked()),this,SLOT(printBudget()));
 }
 
 void MainWindow::loadPaymentType()
@@ -2052,6 +2053,69 @@ void MainWindow::changeBudgetYear(int)
     loadAccountsBudget(uibudgetexecution->tree_puc);
     loadAccountsBudgetTotals(uibudgetexecution->tree_puc);
     uibudgetexecution->tree_puc->expandToDepth(0);
+}
+
+void recursivePrintBudget() {
+
+}
+
+void MainWindow::printBudget()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setCreator("JP-Property");
+    printer.setDocName("Presupuesto");
+
+    QPrintDialog printDialog(&printer, this);
+    if (printDialog.exec() == QDialog::Accepted) {
+      QPainter painter(&printer);
+      QFont font = painter.font();
+      font.setPointSize(font.pointSize()-2);
+      painter.setFont(font);
+
+      int page = printDialog.fromPage();
+      int to = printDialog.toPage();
+
+      int y = cv(22);
+      int p = 0;
+      int min = 0;
+      int max = uibudgetexecution->tree_puc->topLevelItemCount();
+      if (page>0) {
+        min = (page-1)*44;
+        max = max<(to*44)?max:(to*44);
+      }
+      else {
+        page=1;
+      }
+      for (int i=min; i<max; i++) {
+        if (p==44 || p==0) {
+          if (p>0) {
+            printer.newPage();
+            page++;
+          }
+          p = 0;
+          y = cv(22);
+
+          font.setPointSize(font.pointSize()+6);
+          painter.setFont(font);
+          painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uibudgetexecution->spinBox_year->text()+" Ejecución Presupuestal ");
+          font.setPointSize(font.pointSize()-6);
+          painter.setFont(font);
+
+          painter.drawText(ch(170),cv(11),ch(15),cv(6),Qt::AlignRight,QString("Pagina %1").arg(page));
+          painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,"RUBRO");
+          painter.drawText(ch(110),y,ch(20),cv(6),Qt::AlignRight,"PRESUPUESTADO");
+          painter.drawText(ch(140),y,ch(20),cv(6),Qt::AlignRight,"EJECUTADO");
+          painter.drawText(ch(165),y,ch(20),cv(6),Qt::AlignRight,"SALDO");
+        }
+        int y = cv( (30+p*5) );
+        painter.drawText(ch(9),y,ch(98),cv(6),Qt::AlignLeft,uibudgetexecution->tree_puc->topLevelItem(i)->text(0));
+        //painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,uibudgetexecution->tree_puc->topLevelItem(i)->text(1));
+        painter.drawText(ch(110),y,ch(20),cv(6),Qt::AlignRight,uibudgetexecution->tree_puc->topLevelItem(i)->text(1));
+        painter.drawText(ch(140),y,ch(20),cv(6),Qt::AlignRight,uibudgetexecution->tree_puc->topLevelItem(i)->text(14));
+        painter.drawText(ch(165),y,ch(20),cv(6),Qt::AlignRight,uibudgetexecution->tree_puc->topLevelItem(i)->text(15));
+        p++;
+      }
+    }
 }
 
 void MainWindow::createBackup()
