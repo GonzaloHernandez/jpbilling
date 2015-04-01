@@ -905,6 +905,7 @@ void MainWindow::printBilling(QModelIndex mi)
     QPrinter printer(QPrinter::HighResolution);
     printer.setCreator("JP-Billing");
     printer.setDocName(QString("Facturación %1").arg(number));
+    printer.setNumCopies(2);
 
     QPrintDialog printDialog(&printer, this);
     if (printDialog.exec() == QDialog::Accepted) {
@@ -2055,8 +2056,23 @@ void MainWindow::changeBudgetYear(int)
     uibudgetexecution->tree_puc->expandToDepth(0);
 }
 
-void recursivePrintBudget() {
+void recursivePrintBudget(QTreeWidgetItem* item,QPainter& painter,int& p,int level) {
+    QFont font = painter.font();
+    font.setPointSize(font.pointSize()-1);
+    painter.setFont(font);
+    for (int i=0; i<item->childCount(); i++) {
+        QTreeWidgetItem* child = item->child(i);
 
+        int y = cv( (30+p*5) );
+        painter.drawText(ch((9+level*2)),y,ch(98),cv(6),Qt::AlignLeft,child->text(0));
+        painter.drawText(ch(110),y,ch(20),cv(6),Qt::AlignRight,child->text(1));
+        painter.drawText(ch(140),y,ch(20),cv(6),Qt::AlignRight,child->text(14));
+        painter.drawText(ch(165),y,ch(20),cv(6),Qt::AlignRight,child->text(15));
+        p++;
+        if (child->isExpanded()) recursivePrintBudget(child,painter,p,level+1);
+    }
+    font.setPointSize(font.pointSize()+1);
+    painter.setFont(font);
 }
 
 void MainWindow::printBudget()
@@ -2114,6 +2130,7 @@ void MainWindow::printBudget()
         painter.drawText(ch(140),y,ch(20),cv(6),Qt::AlignRight,uibudgetexecution->tree_puc->topLevelItem(i)->text(14));
         painter.drawText(ch(165),y,ch(20),cv(6),Qt::AlignRight,uibudgetexecution->tree_puc->topLevelItem(i)->text(15));
         p++;
+        recursivePrintBudget(uibudgetexecution->tree_puc->topLevelItem(i),painter,p,1);
       }
     }
 }
