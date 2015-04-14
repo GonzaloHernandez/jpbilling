@@ -244,6 +244,7 @@ void MainWindow::openPUC()
   QStringList labels("Cuentas");
   uipuc->tree_puc->setHeaderLabels(labels);
   connect(uipuc->button_detail,SIGNAL(clicked()),this,SLOT(openAccountDetail()));
+  connect(uipuc->tree_puc,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(modifyAccount(QPoint)));
   loadAccounts(uipuc->tree_puc);
 }
 
@@ -268,8 +269,11 @@ void MainWindow::openHomes()
   uihomes->table_homes->setHorizontalHeaderLabels(labels);
   uihomes->table_homes->setColumnWidth(0, 80);
   uihomes->table_homes->setColumnWidth(1,250);
+  uihomes->table_homes->setColumnHidden(3,true);
   connect(uihomes->button_save,SIGNAL(clicked()),this,SLOT(saveHomes()));
+  connect(uihomes->button_add,SIGNAL(clicked()),this,SLOT(addHome()));
   connect(uihomes->button_reload,SIGNAL(clicked()),this,SLOT(loadHomes()));
+  connect(uihomes->table_homes,SIGNAL(cellDoubleClicked(int,int)),this,SLOT(homeModified(int,int)));
   loadHomes();
 }
 
@@ -1098,33 +1102,64 @@ void MainWindow::loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item, int ha
   }
 }
 
+void MainWindow::modifyAccount(QPoint)
+{
+    qDebug() << "here";
+}
+
 void MainWindow::loadHomes()
 {
   QSqlQuery query;
   query.exec(QString("SELECT id,field1,field2 FROM descriptors WHERE type=1"));
   int i = 0;
   while (query.next()) {
+    uihomes->table_homes->setRowCount(i+1);
     QTableWidgetItem *item = new QTableWidgetItem(query.value(0).toString());
     item->setFlags(Qt::ItemIsSelectable|Qt::ItemIsEnabled);
     uihomes->table_homes->setItem(i,0,item);
     uihomes->table_homes->setItem(i,1,new QTableWidgetItem(query.value(1).toString()));
     uihomes->table_homes->setItem(i,2,new QTableWidgetItem(query.value(2).toString()));
+    uihomes->table_homes->setItem(i,3,new QTableWidgetItem("O"));
     i++;
   }
+}
+
+void MainWindow::addHome()
+{
+    int count = uihomes->table_homes->rowCount();
+    uihomes->table_homes->setRowCount(count+1);
+    uihomes->table_homes->scrollToBottom();
+    uihomes->table_homes->setItem(count,3,new QTableWidgetItem("N"));
 }
 
 void MainWindow::saveHomes()
 {
   QSqlQuery query;
-  for (int i=0; i<49; i++) {
+  int createcount=0,modifiedcount=0;
+  for (int i=0; i<uihomes->table_homes->rowCount(); i++) {
     QString id    = uihomes->table_homes->item(i,0)->text();
     QString owner = uihomes->table_homes->item(i,1)->text();
     QString phone = uihomes->table_homes->item(i,2)->text();
-
-    QString querytext = QString("UPDATE descriptors SET field1 = '%1', field2 = '%2' WHERE id = '%3'").arg(owner).arg(phone).arg(id);
-    query.exec(querytext);
+    if (uihomes->table_homes->item(i,3)->text()=="N") {
+        QString querytext = QString("INSERT INTO descriptors(id,field1,field2,type) VALUES ('%1','%2','%3',1)").arg(id).arg(owner).arg(phone);
+        query.exec(querytext);
+        createcount++;
+    }
+    else if (uihomes->table_homes->item(i,3)->text()=="M") {
+        QString querytext = QString("UPDATE descriptors SET field1 = '%1', field2 = '%2' WHERE id = '%3'").arg(owner).arg(phone).arg(id);
+        query.exec(querytext);
+        modifiedcount++;
+    }
   }
-  QMessageBox::information(this,"Registros guardados","Las modificaciones fueron guardadas");
+  QString info = QString("Registros modificados: %1\nRegistros creados: %2").arg(modifiedcount).arg(createcount);
+  QMessageBox::information(this,"Registros guardados",info);
+}
+
+void MainWindow::homeModified(int r, int)
+{
+    if (uihomes->table_homes->item(r,3)->text()=="O") {
+        uihomes->table_homes->setItem(r,3,new QTableWidgetItem("M"));
+    }
 }
 
 void MainWindow::loadProvidersWindow()
