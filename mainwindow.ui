@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Condominio los Frailejones (Release 58)</string>
+   <string>Join Property Billing</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -77,10 +77,20 @@
     <addaction name="separator"/>
     <addaction name="action_export"/>
    </widget>
+   <widget class="QMenu" name="menu_help">
+    <property name="title">
+     <string>Ayuda</string>
+    </property>
+    <addaction name="action_contents"/>
+    <addaction name="action_documentation"/>
+    <addaction name="separator"/>
+    <addaction name="action_about"/>
+   </widget>
    <addaction name="menu_system"/>
    <addaction name="menu_activities"/>
    <addaction name="menu_reports"/>
    <addaction name="menu_tools"/>
+   <addaction name="menu_help"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -201,6 +211,21 @@
   <action name="action_export">
    <property name="text">
     <string>Exportar</string>
+   </property>
+  </action>
+  <action name="action_documentation">
+   <property name="text">
+    <string>Documentación</string>
+   </property>
+  </action>
+  <action name="action_about">
+   <property name="text">
+    <string>Acerca de</string>
+   </property>
+  </action>
+  <action name="action_contents">
+   <property name="text">
+    <string>Contenidos</string>
    </property>
   </action>
  </widget>
@@ -401,6 +426,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_about</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openAbout()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -414,5 +455,6 @@
   <slot>openSummaryCollect()</slot>
   <slot>openBudgetExecution()</slot>
   <slot>createBackup()</slot>
+  <slot>openAbout()</slot>
  </slots>
 </ui>

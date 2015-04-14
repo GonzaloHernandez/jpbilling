@@ -16,7 +16,8 @@ SOURCES += main.cpp\
         mainwindow.cpp
 
 HEADERS  += \
-    mainwindow.h
+    mainwindow.h \
+    about.h
 
 FORMS    += mainwindow.ui \
     paymentswindow.ui \

@@ -858,13 +858,15 @@ void MainWindow::savePenalties()
     value     = uibilling->table_penalties->item(i,3)->text().toInt();
     detail    = uibilling->table_penalties->item(i,1)->text();
 
-    QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
-    query.exec(querytext0);
+    if (value>0) {
+        QString querytext0 = QString("INSERT INTO entries VALUES(%1,1,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(account0).arg(date).arg(DEBIT).arg(value).arg(detail).arg(home);
+        query.exec(querytext0);
 
-    QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
-    query.exec(querytext1);
+        QString querytext1 = QString("INSERT INTO entries VALUES(%1,2,%2,'%3',%4,%5,'%6','%7',null,null,'1')").arg(number).arg(account1).arg(date).arg(CREDIT).arg(value).arg(detail).arg(home);
+        query.exec(querytext1);
 
-    number++;
+        number++;
+    }
   }
   QMessageBox::information(this,"Registros guardados",QString("%1 asientos contables procesados").arg(uibilling->table_penalties->rowCount()));
   uibilling->table_penalties->setRowCount(0);
@@ -2158,5 +2160,13 @@ void MainWindow::createBackup()
     dumpProcess.setStandardOutputFile(fileName);
     dumpProcess.start("mysqldump", args);
     while( !dumpProcess.waitForFinished(100) );
+}
+
+#include <about.h>
+
+void MainWindow::openAbout()
+{
+    About* about = new About(this);
+    about->show();
 }
 

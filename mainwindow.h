@@ -107,6 +107,8 @@ private slots:
 
     void createBackup();
 
+    void openAbout();
+
 private:
     Ui::MainWindow*             ui;
     Ui::PaymentsWindow*         uipayments;
