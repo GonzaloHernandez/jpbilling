@@ -5,6 +5,9 @@
 #include <QMouseEvent>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QFile>
+#include <QTextStream>
+#include <QMessageBox>
 
 /**
  * @brief The About class
@@ -26,12 +29,21 @@ public:
         setWindowTitle("Acerca de esta aplicación");
         QSize fixedSize(300,150);
         resize(fixedSize);
+
+        QFile file("/etc/jpbilling/jpbilling.conf");
+        QString release = "0";
+        if(file.open(QIODevice::ReadOnly)) {
+            QTextStream in(&file);
+            release = in.readLine();
+            file.close();
+        }
+
         QVBoxLayout* layout = new QVBoxLayout();
         setLayout(layout);
         info[0] = new QLabel("Universidad de Nariño");
         info[1] = new QLabel("<a href='http://sonar.udenar.edu.co/jpbilling'>http://sonar.udenar.edu.co</a>");
         info[2] = new QLabel("-------------------------------------");
-        info[3] = new QLabel("[ Release 59 ]");
+        info[3] = new QLabel( QString("[ %1 ]").arg(release) );
         info[4] = new QLabel("GonzaloHernandez@udenar.edu.co");
 
         QFont font = info[4]->font();
