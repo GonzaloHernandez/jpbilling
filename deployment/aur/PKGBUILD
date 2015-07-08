@@ -1,0 +1,59 @@
+# This is an example PKGBUILD file. Use this as a start to creating your own,
+# and remove these comments. For more information, see 'man PKGBUILD'.
+# NOTE: Please fill out the license field for your package! If it is unknown,
+# then please put 'unknown'.
+
+# Maintainer: Your Name <gonzalohernandez@udenar.edu.co>
+pkgname=jpbilling
+pkgver=r60
+pkgrel=1
+epoch=
+pkgdesc="Join Property Tool"
+arch=('any')
+url="https://github.com/GonzaloHernandez/jpbilling.git"
+license=('GPL')
+groups=('qt')
+depends=('mariadb')
+makedepends=('git')
+checkdepends=()
+optdepends=()
+provides=()
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=('git://github.com/GonzaloHernandez/jpbilling.git')
+noextract=()
+md5sums=('SKIP')
+validpgpkeys=()
+
+pkgver() {
+	cd "$pkgname"
+	printf "r%s" "$(git rev-list --count HEAD)"
+}
+
+#prepare() {
+	#cd "$pkgname-$pkgver"
+	#patch -p1 -i "$srcdir/$pkgname-$pkgver.patch"
+#}
+
+build() {
+	cd "$pkgname"
+	qmake
+	make
+}
+
+#check() {
+	#cd "$pkgname-$pkgver"
+	#make -k check
+#}
+
+package() {
+	install -Dm751 "$srcdir"/"$pkgname"/"$pkgname" "$pkgdir"/usr/bin
+	install -Dm644 "$srcdir"/"$pkgname"/deployment/"$pkgname".desktop "$pkgdir"/usr/share/applications/"$pkgname".desktop
+	install -Dm644 "$srcdir"/"$pkgname"/deployment/"$pkgname".png "$pkgdir"/usr/share/pixmaps/"$pkgname".png
+	mkdir -p "$pkgdir"/etc/"$pkgname"
+	echo "$pkgver" > "$pkgdir"/etc/"$pkgname"/"$pkgname".conf
+}
