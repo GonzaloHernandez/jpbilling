@@ -76,6 +76,7 @@
     <addaction name="action_restorebackup"/>
     <addaction name="separator"/>
     <addaction name="action_export"/>
+    <addaction name="action_specialentry"/>
    </widget>
    <widget class="QMenu" name="menu_help">
     <property name="title">
@@ -226,6 +227,11 @@
   <action name="action_contents">
    <property name="text">
     <string>Contenidos</string>
+   </property>
+  </action>
+  <action name="action_specialentry">
+   <property name="text">
+    <string>Asiento Contable Manual</string>
    </property>
   </action>
  </widget>
@@ -442,6 +448,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_specialentry</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openSpecialEntry()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -456,5 +478,6 @@
   <slot>openBudgetExecution()</slot>
   <slot>createBackup()</slot>
   <slot>openAbout()</slot>
+  <slot>openSpecialEntry()</slot>
  </slots>
 </ui>

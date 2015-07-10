@@ -16,6 +16,7 @@
 #include <ui_summarydebts.h>
 #include <ui_summarycollect.h>
 #include <ui_budgetexecutionwindow.h>
+#include <ui_specialentry.h>
 
 #define DEBIT 0
 #define CREDIT 1
@@ -112,6 +113,8 @@ private slots:
 
     void openAbout();
 
+    void openSpecialEntry();
+
 private:
     Ui::MainWindow*             ui;
     Ui::PaymentsWindow*         uipayments;
@@ -126,6 +129,7 @@ private:
     Ui::SummaryDebtsWindow*     uisummarydebts;
     Ui::SummaryCollectWindow*   uisummarycollect;
     Ui::BudgetExecutionWindow*  uibudgetexecution;
+    Ui::SpecialEntry*           uispecialentry;
 
     bool                dbconnected;
     QSqlDatabase        db;

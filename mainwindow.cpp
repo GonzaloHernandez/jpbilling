@@ -2205,3 +2205,35 @@ void MainWindow::openAbout()
     about->show();
 }
 
+void MainWindow::openSpecialEntry()
+{
+    foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
+      if (subwindow->windowTitle() == "Asiento Contable Manual") {
+        subwindow->activateWindow();
+        return;
+      }
+    }
+
+    QWidget* subwindow = new QWidget;
+    uispecialentry = new Ui::SpecialEntry;
+    uispecialentry->setupUi(subwindow);
+    subwindow->setWindowTitle("Asiento Contable Manual");
+    subwindow->setMinimumWidth(460);
+    ui->mdiArea->addSubWindow(subwindow);
+
+    uispecialentry->dateedit_date->setDate(QDate::currentDate());
+
+    QStringList labels;
+    labels<<"Cuenta"<<"Fecha"<<"Tipo"<<"Valor"<<"Detalle"<<"Descriptor"<<"Especial"<<"Comprobante"<<"Estado";
+    uispecialentry->table_assets->setHorizontalHeaderLabels(labels);
+
+    uispecialentry->table_assets->setColumnHidden(1,true);
+    uispecialentry->table_assets->setColumnHidden(4,true);
+    uispecialentry->table_assets->setColumnHidden(5,true);
+    uispecialentry->table_assets->setColumnHidden(6,true);
+    uispecialentry->table_assets->setColumnHidden(7,true);
+    uispecialentry->table_assets->setColumnHidden(8,true);
+
+    subwindow->show();
+}
+
