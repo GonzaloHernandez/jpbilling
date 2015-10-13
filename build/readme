@@ -1,0 +1,8 @@
+Use qmake and make to get a executable file:
+
+$ qmake ../jpbilling.pro
+$ make
+
+To run application:
+
+$ ./jpbilling

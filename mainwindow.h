@@ -24,7 +24,14 @@
 namespace Ui {
 class MainWindow;
 }
-
+/**
+ * @brief The MainWindow class provide the all functionality to the application.
+ * This class has list the all methods, which be developed in the mainwindow.cpp file.
+ * To design this interface was coded its characteristics in
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/mainwindow.ui">
+ * mainwindow.ui</a> file using XML format.
+ * <img src="screenshoots/mainwindow.png">
+ */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT

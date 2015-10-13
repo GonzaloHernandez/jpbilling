@@ -10,20 +10,28 @@
 #include <QMessageBox>
 
 /**
- * @brief The About class
+ * @brief The About class is required to show the author information.  This interface
+ * allow to user to follow some important links.
  */
 class About : public QDialog
 {
     Q_OBJECT
 private:
     QLabel* info[6];
-
+    /**
+     * @brief mousePressEvent enable to close the current dialog doing click over its
+     * surface.
+     */
     void mousePressEvent(QMouseEvent*)
     {
         close();
     }
 
 public:
+    /**
+     * @brief About is the constructor class.  Its aim is arrange the information.
+     * @param p needed to join this dialog with the main window.
+     */
     About(QWidget* p) : QDialog(p)
     {
         setWindowTitle("Acerca de esta aplicación");

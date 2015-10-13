@@ -32,6 +32,11 @@ private:
     }
 };
 
+/**
+ * @brief This constructor start the MainWindow UserInterface created in XML format.
+ * This class launch a few settings and verify the database connection.
+ * @param parent
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -42,19 +47,26 @@ MainWindow::MainWindow(QWidget *parent) :
     connectDB();
 }
 
+/**
+ * @brief To finish, this method close de UserInterface and disconnect the database
+ */
 MainWindow::~MainWindow()
 {
     delete ui;
     disconnectDB();
 }
 
+/**
+ * @brief Start the database settings. Is required a MySQL instalation previews and
+ * launched using jpbilling-launchdb.sql script.
+ */
 void MainWindow::connectDB()
 {
   db = QSqlDatabase::addDatabase("QMYSQL");
   db.setHostName("localhost");
   db.setDatabaseName("accounting");
   db.setUserName("root");
-  db.setPassword("123");
+  db.setPassword("");
   dbconnected = db.open();
 }
 
@@ -65,6 +77,12 @@ void MainWindow::disconnectDB()
   }
 }
 
+/**
+ * @brief This method launch the <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/paymentswindow.ui">
+ * paymentswindow.ui</a> interface, which is used to save the payments to service providers.  This interface
+ * show all providers allowed so save the new register in the appropriate accounting entry.
+ * <img src=screenshoots/paymentswindow.png>
+ */
 void MainWindow::openPayments()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -94,6 +112,12 @@ void MainWindow::openPayments()
   loadResources();
 }
 
+/**
+ * @brief This method show the Billing Interface launching the
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/billingwindow.ui">
+ * billingwindow.ui</a> stored in XML format.  This Interface charge the new values to owners.
+ * <img src=screenshoots/billingwindow.png>
+ */
 void MainWindow::openBilling()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -139,6 +163,14 @@ void MainWindow::openBilling()
   loadBillingType();
 }
 
+/**
+ * @brief This function open the BillingList interface, which list the all charges stored
+ * at each owner after set values in the BillingWindow.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/billinglistwindow.ui">
+ * billinglistwindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/billinglistwindow.png>
+ * @return
+ */
 QWidget* MainWindow::openBillingList()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -190,6 +222,13 @@ QWidget* MainWindow::openBillingList()
   return subwindow;
 }
 
+/**
+ * @brief This method show the Collect Window to store in the database the values payed by
+ * the owners.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/collectwindow.ui">
+ * collectwindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/collectwindow.png>
+ */
 void MainWindow::openCollect()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -224,6 +263,12 @@ void MainWindow::openCollect()
   uicollect->lineedit_home->setFocus();
 }
 
+/**
+ * @brief This method show the Accounts List interface. This window list the "PUC" template.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/pucwindow.ui">
+ * pucwindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/pucwindow.png>
+ */
 void MainWindow::openPUC()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -248,6 +293,12 @@ void MainWindow::openPUC()
   loadAccounts(uipuc->tree_puc);
 }
 
+/**
+ * @brief This method show the Homes List interface. This window list the all owners details.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/homeswindow.ui">
+ * homeswindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/homeswindow.png>
+ */
 void MainWindow::openHomes()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -277,6 +328,13 @@ void MainWindow::openHomes()
   loadHomes();
 }
 
+/**
+ * @brief This method show the Service Providers List interface. This window contain the
+ * providers details.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/providerswindow.ui">
+ * providerswindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/providerswindow.png>
+ */
 void MainWindow::openProviders()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -305,6 +363,13 @@ void MainWindow::openProviders()
   loadProvidersWindow();
 }
 
+/**
+ * @brief This method show the history of payments and charges of each owner.
+ * This window is sorted by date info.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/homehistorywindow.ui">
+ * homehistorywindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/homehistorywindow.png>
+ */
 void MainWindow::openHomeHistory()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -336,6 +401,13 @@ void MainWindow::openHomeHistory()
   connect(uihomehistory->button_highlight,SIGNAL(clicked()),this,SLOT(highlight()));
 }
 
+/**
+ * @brief This method show the Summary Debts report. This window show a brief info about
+ * whole debts arrange by year.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/pucwindow.ui">
+ * pucwindow.ui</a> is stored in XML format.
+ * <img src=screenshoots/pucwindow.png>
+ */
 void MainWindow::openSummaryDebts()
 {
   foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -383,6 +455,13 @@ void MainWindow::openSummaryDebts()
   subwindow->show();
 }
 
+/**
+ * @brief This method show the Summary Collect report. This window show a brief info about
+ * whole collect arrange by month.
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/summarycollect.ui">
+ * summarycollect.ui</a> is stored in XML format.
+ * <img src=screenshoots/summarycollect.png>
+ */
 void MainWindow::openSummaryCollect()
 {
     foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -413,6 +492,13 @@ void MainWindow::openSummaryCollect()
     subwindow->show();
 }
 
+/**
+ * @brief This method show the main general Budget Execution Report. This window is designed
+ * using XML format in
+ * <a href="https://github.com/GonzaloHernandez/jpbilling/blob/master/budgetexecutionwindow.ui">
+ * budgetexecutionwindow.ui</a>.  This interface resume the accounting execution.
+ * <img src=screenshoots/budgetexecutionwindow.png>
+ */
 void MainWindow::openBudgetExecution()
 {
     foreach (QMdiSubWindow* subwindow, ui->mdiArea->subWindowList()) {
@@ -1801,7 +1887,7 @@ void MainWindow::loadSummaryCollect()
     QSqlQuery query;
     query.exec(QString("SELECT year(date) y,month(date) m,sum(value) v "
                        "FROM entries "
-                       "WHERE type = 0 AND account LIKE '11%' "
+                       "WHERE type = 0 AND account LIKE '110505%' "
                        "GROUP BY y,m "
                        "ORDER BY y,m; "));
     QString months[] = {"Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"};
