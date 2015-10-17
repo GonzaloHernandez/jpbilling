@@ -65,7 +65,7 @@ void MainWindow::connectDB()
   db = QSqlDatabase::addDatabase("QMYSQL");
   db.setHostName("localhost");
   db.setDatabaseName("accounting");
-  db.setUserName("root");
+  db.setUserName("accountant");
   db.setPassword("");
   dbconnected = db.open();
 }

@@ -38,7 +38,7 @@ public:
         QSize fixedSize(300,150);
         resize(fixedSize);
 
-        QFile file("/etc/jpbilling/jpbilling.conf");
+        QFile file("/usr/share/jpbilling/jpbilling.conf");
         QString release = "0";
         if(file.open(QIODevice::ReadOnly)) {
             QTextStream in(&file);

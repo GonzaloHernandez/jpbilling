@@ -5,7 +5,7 @@
 
 # Maintainer: Your Name <gonzalohernandez@udenar.edu.co>
 pkgname=jpbilling
-pkgver=r62
+pkgver=r66
 pkgrel=1
 epoch=
 pkgdesc="Join Property Tool"
@@ -55,5 +55,5 @@ package() {
 	install -Dm644 "$srcdir"/"$pkgname"/deployment/"$pkgname".desktop "$pkgdir"/usr/share/applications/"$pkgname".desktop
 	install -Dm644 "$srcdir"/"$pkgname"/deployment/"$pkgname".png "$pkgdir"/usr/share/pixmaps/"$pkgname".png
 	mkdir -p "$pkgdir"/etc/"$pkgname"
-	echo "$pkgver" > "$pkgdir"/etc/"$pkgname"/"$pkgname".conf
+	echo "$pkgver" > "$pkgdir"/usr/share/"$pkgname"/"$pkgname".conf
 }
