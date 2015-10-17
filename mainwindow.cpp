@@ -2323,3 +2323,15 @@ void MainWindow::openSpecialEntry()
     subwindow->show();
 }
 
+#include <QDesktopServices>
+
+void MainWindow::openDocumentation()
+{
+    QDesktopServices::openUrl(QUrl("http://sonar.udenar.edu.co/jpbilling-documentation"));
+}
+
+void MainWindow::openHelp()
+{
+    QDesktopServices::openUrl(QUrl("http://sonar.udenar.edu.co/jpbilling-help"));
+}
+

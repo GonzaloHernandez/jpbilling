@@ -122,6 +122,9 @@ private slots:
 
     void openSpecialEntry();
 
+    void openDocumentation();
+    void openHelp();
+
 private:
     Ui::MainWindow*             ui;
     Ui::PaymentsWindow*         uipayments;

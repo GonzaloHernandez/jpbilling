@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>489</width>
+    <height>342</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,8 +37,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
-     <height>24</height>
+     <width>489</width>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_system">
@@ -75,7 +75,6 @@
     <addaction name="action_createbackup"/>
     <addaction name="action_restorebackup"/>
     <addaction name="separator"/>
-    <addaction name="action_export"/>
     <addaction name="action_specialentry"/>
    </widget>
    <widget class="QMenu" name="menu_help">
@@ -208,6 +207,9 @@
    <property name="text">
     <string>Restaurar copia de seguridad</string>
    </property>
+   <property name="visible">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="action_export">
    <property name="text">
@@ -232,6 +234,9 @@
   <action name="action_specialentry">
    <property name="text">
     <string>Asiento Contable Manual</string>
+   </property>
+   <property name="visible">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
@@ -464,6 +469,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>action_documentation</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openDocumentation()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>244</x>
+     <y>170</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>action_contents</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openHelp()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>244</x>
+     <y>170</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openPayments()</slot>
@@ -479,5 +516,7 @@
   <slot>createBackup()</slot>
   <slot>openAbout()</slot>
   <slot>openSpecialEntry()</slot>
+  <slot>openDocumentation()</slot>
+  <slot>openHelp()</slot>
  </slots>
 </ui>
