@@ -65,8 +65,8 @@ void MainWindow::connectDB()
   db = QSqlDatabase::addDatabase("QMYSQL");
   db.setHostName("localhost");
   db.setDatabaseName("accounting");
-  db.setUserName("accountant");
-  db.setPassword("");
+  db.setUserName("root");
+  db.setPassword("123");
   dbconnected = db.open();
 }
 
@@ -826,6 +826,7 @@ void MainWindow::createGeneralBilling()
       uibillinglist->table_billing->setItem(i,3+t,new QTableWidgetItem(QString("%L1").arg(totals[t])));
     }
     uibillinglist->table_billing->setItem(i,9,new QTableWidgetItem(QString("%L1").arg(total)));
+    uibillinglist->table_billing->setItem(i,13,new QTableWidgetItem(QString("%L1").arg(total+5000)));
 
     for (int c=0; c<11; c++) {
 //      if (c!=2) {
@@ -835,11 +836,10 @@ void MainWindow::createGeneralBilling()
         uibillinglist->table_billing->item(i,c)->setTextAlignment(Qt::AlignRight|Qt::AlignCenter);
       }
     }
-
     i++;
   }
   QString comment1 = QString("Fecha de expedición %1.")
-          .arg(uibilling->dateedit_date->date().toString("dd MM yy"));
+          .arg(uibilling->dateedit_date->date().toString("MMMM dd/yyyy"));
 
   QString comment2 = QString("Pasados 10 días, debe cancelar $5.000 por cada mes de incumplimiento.");
 
@@ -990,6 +990,7 @@ void MainWindow::printBilling(QModelIndex mi)
     QString t50     = uibillinglist->table_billing->item(row,7)->text();
     QString t55     = uibillinglist->table_billing->item(row,8)->text();
     QString t       = uibillinglist->table_billing->item(row,9)->text();
+    QString tp      = uibillinglist->table_billing->item(row,13)->text();
     QString n45     = uibillinglist->table_billing->horizontalHeaderItem(6)->toolTip();
     QString n50     = uibillinglist->table_billing->horizontalHeaderItem(7)->toolTip();
     QString n55     = uibillinglist->table_billing->horizontalHeaderItem(8)->toolTip();
@@ -1033,13 +1034,18 @@ void MainWindow::printBilling(QModelIndex mi)
 
       QFont font = painter.font();
       font.setBold(true);
-      font.setPointSize(font.pointSize()+1);
+      font.setPointSize(font.pointSize());
       painter.setFont(font);
 
-      painter.drawText(ch( 70),cv(y),ch( 30),cv(4),Qt::AlignLeft,"TOTAL A PAGAR");
+      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR Hasta Enero 10");
       painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,t);
 
       y += 4.3;
+
+
+      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR Después de Enero 10");
+      painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,tp);
+
       y += 4.8;
 
       font.setBold(false);
@@ -1534,6 +1540,7 @@ void MainWindow::loadHistory()
   if (uihomehistory->table_history->rowCount()%44>0) pagecount ++;
 
   uihomehistory->button_print->setText(QString("Imprimir %1 pagina%2").arg(pagecount).arg(pagecount==1?"":"s"));
+  uihomehistory->table_history->scrollToBottom();
 }
 
 void MainWindow::printHistory()
@@ -1758,6 +1765,7 @@ void MainWindow::loadAccountDetail(int account, int year, int month)
     }
     i++;
   }
+  uiaccountdetail->table_detail->scrollToBottom();
 }
 
 void MainWindow::loadSummaryDebts()
