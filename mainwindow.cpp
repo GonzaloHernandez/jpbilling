@@ -1987,7 +1987,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QSqlQuery query;
     if (!item) {
-        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number = 15");
+        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number in (15,18)");
         while (query.next()) {
           QTreeWidgetItem* it = addTreeWidgetItem(query,year);
           widget->addTopLevelItem(it);
