@@ -63,10 +63,10 @@ MainWindow::~MainWindow()
 void MainWindow::connectDB()
 {
   db = QSqlDatabase::addDatabase("QMYSQL");
-  db.setHostName("localhost");
+  db.setHostName("192.168.0.10");
   db.setDatabaseName("accounting");
-  db.setUserName("root");
-  db.setPassword("123");
+  db.setUserName("accountant");
+  db.setPassword("acc");
   dbconnected = db.open();
 }
 
@@ -1037,14 +1037,13 @@ void MainWindow::printBilling(QModelIndex mi)
       font.setPointSize(font.pointSize());
       painter.setFont(font);
 
-      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR Hasta Enero 10");
+      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR HASTA MARZO 10");
       painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,t);
 
       y += 4.3;
 
-
-      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR Después de Enero 10");
-      painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,tp);
+//      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR Después de Enero 10");
+//      painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,tp);
 
       y += 4.8;
 
@@ -2026,7 +2025,7 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
         QString subquerytext = QString("SELECT sum(value) value "
                                        "FROM entries e,accounts a "
                                        "WHERE e.account = a.number "
-                                       "AND (account LIKE  '5%' OR account LIKE '15%') "
+                                       "AND (account LIKE  '5%' OR account LIKE '15%' or account LIKE '18%') "
                                        "AND year(date)=%1 "
                                        "AND month(date)=%2; ")
                 .arg(year)
