@@ -63,7 +63,7 @@ MainWindow::~MainWindow()
 void MainWindow::connectDB()
 {
   db = QSqlDatabase::addDatabase("QMYSQL");
-  db.setHostName("192.168.0.10");
+  db.setHostName("localhost");
   db.setDatabaseName("accounting");
   db.setUserName("accountant");
   db.setPassword("acc");
@@ -555,7 +555,7 @@ void MainWindow::loadPaymentType()
 {
   uipayments->combobox_type->addItem("");
   QSqlQuery query;
-  query.exec(QString("SELECT number,name FROM accounts WHERE (number LIKE '5%' OR number LIKE '1524%') AND length(number)=6"));
+  query.exec(QString("SELECT number,name FROM accounts WHERE (number LIKE '5%' OR number LIKE '15%' OR number LIKE '1330%') AND length(number)=6"));
   while (query.next())
   {
     uipayments->combobox_type->addItem(query.value(0).toString()+" "+query.value(1).toString(),query.value(0).toInt());
@@ -1986,7 +1986,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QSqlQuery query;
     if (!item) {
-        query.exec("SELECT number, name FROM accounts WHERE handler = 5 OR number in (15,18)");
+        query.exec("SELECT number, name FROM accounts WHERE (handler = 5 OR number in (15,13,18))");
         while (query.next()) {
           QTreeWidgetItem* it = addTreeWidgetItem(query,year);
           widget->addTopLevelItem(it);
@@ -1994,7 +1994,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
         }
     }
     else {
-        query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1").arg(handler));
+        query.exec(QString("SELECT number, name FROM accounts WHERE handler=%1 AND number <> 1320").arg(handler));
         while (query.next()) {
             QTreeWidgetItem* it = addTreeWidgetItem(query,year);
             item->addChild(it);
@@ -2025,7 +2025,8 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
         QString subquerytext = QString("SELECT sum(value) value "
                                        "FROM entries e,accounts a "
                                        "WHERE e.account = a.number "
-                                       "AND (account LIKE  '5%' OR account LIKE '15%' or account LIKE '18%') "
+                                       "AND (account LIKE  '5%' OR account LIKE '15%' or account LIKE '18%' or account LIKE '13%') "
+                                       "AND (account NOT LIKE  '1320%') "
                                        "AND year(date)=%1 "
                                        "AND month(date)=%2; ")
                 .arg(year)
@@ -2107,6 +2108,7 @@ void MainWindow::openBudgetDetail(QTreeWidgetItem *it, int column)
 {
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QString account = it->data(0,0).toString().split(" ").at(0);
+    if (column == 0) return;
     if (column == 1) {
         if (it->childCount()!=0) return;
         bool ok;
