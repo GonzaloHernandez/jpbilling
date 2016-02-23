@@ -1004,7 +1004,7 @@ void MainWindow::printBilling(QModelIndex mi)
     if (printDialog.exec() == QDialog::Accepted) {
       QPainter painter(&printer);
 
-      double y = 33.0;
+      double y = 34.8;
 
       painter.drawText(ch( 20),cv(y),ch(100),cv(5),Qt::AlignLeft,owner); y += 4.9;
       painter.drawText(ch( 20),cv(y),ch(100),cv(5),Qt::AlignLeft,home);  y += 9.7;
