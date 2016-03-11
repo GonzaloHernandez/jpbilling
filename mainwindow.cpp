@@ -63,7 +63,7 @@ MainWindow::~MainWindow()
 void MainWindow::connectDB()
 {
   db = QSqlDatabase::addDatabase("QMYSQL");
-  db.setHostName("localhost");
+  db.setHostName("192.168.0.12");
   db.setDatabaseName("accounting");
   db.setUserName("accountant");
   db.setPassword("acc");
@@ -1198,6 +1198,78 @@ void MainWindow::modifyAccount(QPoint)
     qDebug() << "here";
 }
 
+void MainWindow::printAccountHistory()
+{
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setCreator("JP-Property");
+    printer.setDocName("PUC Historial");
+
+    QPrintDialog printDialog(&printer, this);
+    if (printDialog.exec() == QDialog::Accepted) {
+        QPainter painter(&printer);
+        QFont font = painter.font();
+        font.setPointSize(font.pointSize()-2);
+        painter.setFont(font);
+
+        int page = printDialog.fromPage();
+        int to = printDialog.toPage();
+
+        int y = cv(22);
+        int p = 0;
+        int min = 0;
+//        int max = uihomehistory->table_history->rowCount();
+        int max = uiaccountdetail->table_detail->rowCount();
+        if (page>0) {
+            min = (page-1)*44;
+            max = max<(to*44)?max:(to*44);
+        }
+        else {
+            page=1;
+        }
+        for (int i=min; i<max; i++) {
+            if (p==44 || p==0) {
+                if (p>0) {
+                    printer.newPage();
+                    page++;
+                }
+                p = 0;
+                y = cv(22);
+
+                font.setPointSize(font.pointSize()+6);
+                painter.setFont(font);
+//                painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
+                painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uiaccountdetail->button_print->text());
+                font.setPointSize(font.pointSize()-6);
+                painter.setFont(font);
+
+                painter.drawText(ch(170),cv(11),ch(15),cv(6),Qt::AlignRight,QString("Pagina %1").arg(page));
+                painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,"FECHA");
+                painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,"CONCEPTO");
+                painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,"DEBE");
+                painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,"HABER");
+                painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,"SALDO");
+            }
+            int y = cv( (30+p*5) );
+//            painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,0)->text());
+            painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uiaccountdetail->table_detail->item(i,0)->text());
+
+//            QString detail = uihomehistory->table_history->item(i,1)->text();
+            QString detail = uiaccountdetail->table_detail->item(i,1)->text();
+//            if (uihomehistory->table_history->item(i,1)->toolTip().split(" ").at(1)!="0") {
+//                detail += " C."+uihomehistory->table_history->item(i,1)->toolTip().split(" ").at(1);
+            detail += " C."+uiaccountdetail->table_detail->item(i,1)->toolTip();
+//            }
+
+            painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,detail);
+//            painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,uihomehistory->table_history->item(i,2)->text());
+            painter.drawText(ch(130),y,ch(15),cv(6),Qt::AlignRight,uiaccountdetail->table_detail->item(i,2)->text());
+            painter.drawText(ch(150),y,ch(15),cv(6),Qt::AlignRight,uiaccountdetail->table_detail->item(i,3)->text());
+            painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,uiaccountdetail->table_detail->item(i,4)->text());
+            p++;
+        }
+    }
+}
+
 void MainWindow::loadHomes()
 {
   QSqlQuery query;
@@ -1677,6 +1749,7 @@ void MainWindow::openAccountDetail()
   uiaccountdetail = new Ui::AccountDetail;
   uiaccountdetail->setupUi(subwindow);
   subwindow->setWindowTitle(QString("Detalle de la cuenta %1").arg(name));
+  uiaccountdetail->button_print->setText(name);
   subwindow->setMinimumWidth(620);
   QStringList labels;
   uiaccountdetail->table_detail->setHorizontalHeaderLabels(labels<<"Fecha"<<"Concepto"<<"Debito"<<"Crédito"<<"Saldo");
@@ -1688,6 +1761,7 @@ void MainWindow::openAccountDetail()
   ui->mdiArea->addSubWindow(subwindow);
   subwindow->show();
   loadAccountDetail(account);
+  connect(uiaccountdetail->button_print,SIGNAL(clicked()),this,SLOT(printAccountHistory()));
 }
 
 /*

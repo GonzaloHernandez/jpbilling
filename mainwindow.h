@@ -80,6 +80,7 @@ private slots:
 
     void loadAccounts(QTreeWidget* widget, QTreeWidgetItem* item=NULL, int handler=0);
     void modifyAccount(QPoint);
+    void printAccountHistory();
 
     void loadHomes();
     void addHome();
