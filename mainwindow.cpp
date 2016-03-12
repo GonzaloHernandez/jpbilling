@@ -1202,7 +1202,7 @@ void MainWindow::printAccountHistory()
 {
     QPrinter printer(QPrinter::HighResolution);
     printer.setCreator("JP-Property");
-    printer.setDocName("PUC Historial");
+    printer.setDocName(uiaccountdetail->button_print->text());
 
     QPrintDialog printDialog(&printer, this);
     if (printDialog.exec() == QDialog::Accepted) {
@@ -1217,7 +1217,6 @@ void MainWindow::printAccountHistory()
         int y = cv(22);
         int p = 0;
         int min = 0;
-//        int max = uihomehistory->table_history->rowCount();
         int max = uiaccountdetail->table_detail->rowCount();
         if (page>0) {
             min = (page-1)*44;
@@ -1237,7 +1236,6 @@ void MainWindow::printAccountHistory()
 
                 font.setPointSize(font.pointSize()+6);
                 painter.setFont(font);
-//                painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
                 painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uiaccountdetail->button_print->text());
                 font.setPointSize(font.pointSize()-6);
                 painter.setFont(font);
@@ -1250,14 +1248,13 @@ void MainWindow::printAccountHistory()
                 painter.drawText(ch(170),y,ch(15),cv(6),Qt::AlignRight,"SALDO");
             }
             int y = cv( (30+p*5) );
-//            painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uihomehistory->table_history->item(i,0)->text());
             painter.drawText(ch(9),y,ch(20),cv(6),Qt::AlignLeft,uiaccountdetail->table_detail->item(i,0)->text());
 
 //            QString detail = uihomehistory->table_history->item(i,1)->text();
             QString detail = uiaccountdetail->table_detail->item(i,1)->text();
 //            if (uihomehistory->table_history->item(i,1)->toolTip().split(" ").at(1)!="0") {
 //                detail += " C."+uihomehistory->table_history->item(i,1)->toolTip().split(" ").at(1);
-            detail += " C."+uiaccountdetail->table_detail->item(i,1)->toolTip();
+            detail += ", "+uiaccountdetail->table_detail->item(i,1)->toolTip();
 //            }
 
             painter.drawText(ch(31),y,ch(98),cv(6),Qt::AlignLeft,detail);
@@ -1618,7 +1615,7 @@ void MainWindow::printHistory()
 {
   QPrinter printer(QPrinter::HighResolution);
   printer.setCreator("JP-Property");
-  printer.setDocName("Historial");
+  printer.setDocName(uihomehistory->label_home->text()+" - "+uihomehistory->label_owner->text());
 
   QPrintDialog printDialog(&printer, this);
   if (printDialog.exec() == QDialog::Accepted) {
@@ -1652,7 +1649,7 @@ void MainWindow::printHistory()
 
         font.setPointSize(font.pointSize()+6);
         painter.setFont(font);
-        painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" "+uihomehistory->label_owner->text());
+        painter.drawText(ch(60),cv(11),ch(80),cv(6),Qt::AlignCenter,uihomehistory->label_home->text()+" - "+uihomehistory->label_owner->text());
         font.setPointSize(font.pointSize()-6);
         painter.setFont(font);
 
