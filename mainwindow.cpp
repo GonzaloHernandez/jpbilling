@@ -63,7 +63,7 @@ MainWindow::~MainWindow()
 void MainWindow::connectDB()
 {
   db = QSqlDatabase::addDatabase("QMYSQL");
-  db.setHostName("192.168.0.12");
+  db.setHostName("localhost");
   db.setDatabaseName("accounting");
   db.setUserName("accountant");
   db.setPassword("acc");
@@ -1037,7 +1037,7 @@ void MainWindow::printBilling(QModelIndex mi)
       font.setPointSize(font.pointSize());
       painter.setFont(font);
 
-      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR HASTA MARZO 10");
+      painter.drawText(ch( 70),cv(y),ch( 60),cv(4),Qt::AlignLeft,"TOTAL A PAGAR HASTA ABRIL 10");
       painter.drawText(ch(128),cv(y),ch( 30),cv(4),Qt::AlignRight,t);
 
       y += 4.3;
@@ -1054,6 +1054,19 @@ void MainWindow::printBilling(QModelIndex mi)
       painter.drawText(ch( 10),cv(y),ch(120),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment1->text()));
       y += 4.3;
       painter.drawText(ch( 10),cv(y),ch(120),cv(4),Qt::AlignLeft,QString(uibillinglist->lineedit_comment2->text()));
+
+      y += 10.7;
+
+      font.setBold(false);
+      font.setPointSize(font.pointSize()+2);
+      painter.setFont(font);
+
+      //painter.drawText(ch( 40),cv(y),ch( 60),cv(4),Qt::AlignLeft,QString("Se adjunta estado de cuenta a la fecha."));
+      y += 4.3;
+      painter.drawText(ch( 8),cv(y),ch(100),cv(4),Qt::AlignLeft,QString("Se adjunta estado de cuenta a la fecha. La nueva Tesorería "));
+      y += 4.2;
+      painter.drawText(ch( 8),cv(y),ch(100),cv(4),Qt::AlignLeft,QString("emitirá los recibos de pago a partir del próximo mes."));
+
     }
   }
 }
@@ -2057,7 +2070,7 @@ void MainWindow::loadAccountsBudget(QTreeWidget* widget, QTreeWidgetItem* item, 
     int year = uibudgetexecution->spinBox_year->text().toInt();
     QSqlQuery query;
     if (!item) {
-        query.exec("SELECT number, name FROM accounts WHERE (handler = 5 OR number in (15,13,18))");
+        query.exec("SELECT number, name FROM accounts WHERE (handler = 5 OR number in (15,18))");
         while (query.next()) {
           QTreeWidgetItem* it = addTreeWidgetItem(query,year);
           widget->addTopLevelItem(it);
@@ -2096,7 +2109,7 @@ void MainWindow::loadAccountsBudgetTotals(QTreeWidget* widget) {
         QString subquerytext = QString("SELECT sum(value) value "
                                        "FROM entries e,accounts a "
                                        "WHERE e.account = a.number "
-                                       "AND (account LIKE  '5%' OR account LIKE '15%' or account LIKE '18%' or account LIKE '13%') "
+                                       "AND (account LIKE  '5%' OR account LIKE '15%' or account LIKE '18%') "
                                        "AND (account NOT LIKE  '1320%') "
                                        "AND year(date)=%1 "
                                        "AND month(date)=%2; ")
